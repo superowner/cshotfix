@@ -3,6 +3,7 @@ using System.Collections;
 using System;
 using System.Reflection;
 using GameMono;
+using HotFix;
 
 public class HotFixMain
 {

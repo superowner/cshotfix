@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\CSHotFixLibrary\Test\Scripts\Gen\HotFixDelegate.cs" />
+    <Compile Include="Assets\CSHotFixLibrary\Test\Scripts\Gen\HotFixFunction.cs" />
     <Compile Include="Assets\CSHotFixLibrary\Test\Scripts\HotFixScripts\HotFixMain.cs" />
     <Compile Include="Assets\CSHotFixLibrary\Test\Scripts\MonoScripts\GameLoop.cs" />
     <Compile Include="Assets\CSHotFixLibrary\Test\Scripts\MonoScripts\Main.cs" />
