@@ -72,15 +72,19 @@
     <Reference Include="HotFixDll">
       <HintPath>Assets\Out\HotFixDll.dll</HintPath>
     </Reference>
+    <Reference Include="InjectGen">
+      <HintPath>Assets\Plugins\InjectGen.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\ILRuntime\Main\IGameHotFixInterfaceAdapter.cs" />
     <Compile Include="Assets\ILRuntime\Main\ISerializePacketAdapter.cs" />
+    <Compile Include="Assets\Inject\InjectAttribute.cs" />
     <Compile Include="Assets\Scripts\App.cs" />
     <Compile Include="Assets\Scripts\HotFixEngine.cs" />
     <Compile Include="Assets\Scripts\IGameHotFixInterface.cs" />
+    <Compile Include="Assets\Scripts\Logic\InjectSample.cs" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />
 </Project>
