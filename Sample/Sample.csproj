@@ -67,6 +67,9 @@
     <Reference Include="ILRuntimeDll">
       <HintPath>Assets\Plugins\ILRuntimeDll.dll</HintPath>
     </Reference>
+    <Reference Include="HotFixDll">
+      <HintPath>Assets\Out\HotFixDll.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\ILRuntime\Main\IGameHotFixInterfaceAdapter.cs" />
