@@ -55,7 +55,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(ProjectDir)$(OutDir)$(ProjectName).dll $(ProjectDir)..\Assets\Out\$(ProjectName).dll
+    <PostBuildEvent>copy $(ProjectDir)$(OutDir)$(ProjectName).dll $(ProjectDir)..\Assets\Out\$(ProjectName).dll.bytes
 copy $(ProjectDir)$(OutDir)$(ProjectName).pdb $(ProjectDir)..\Assets\Out\$(ProjectName).dll.pdb</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

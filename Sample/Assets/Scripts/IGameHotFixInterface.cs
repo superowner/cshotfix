@@ -1,3 +1,10 @@
+//======================================================================
+//   
+//        created by lichunlin
+//        qq:576067421
+//        git:https://github.com/lichunlincn/cshotfix
+//
+//======================================================================
 using UnityEngine;
 using System.Collections;
 using System.Reflection;

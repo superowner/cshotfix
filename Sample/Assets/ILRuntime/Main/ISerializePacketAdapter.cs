@@ -1,4 +1,11 @@
-﻿//using System;
+﻿//======================================================================
+//   
+//        created by lichunlin
+//        qq:576067421
+//        git:https://github.com/lichunlincn/cshotfix
+//
+//======================================================================
+//using System;
 //using System.Collections;
 //using System.Collections.Generic;
 //using ILRuntime.CLR.Method;
