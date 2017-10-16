@@ -78,21 +78,68 @@ namespace HotFixInjector
             //{
             //    foreach (var type in module.GetTypes())
             //    {
-            //        foreach(var member in type.GetMembers())
+            //        if (type.BaseType == typeof(Delegate) || type.BaseType == typeof(MulticastDelegate))
             //        {
-            //            if (member.DeclaringType == typeof(Object) ||
-            //                member.MemberType == MemberTypes.Constructor)
-            //            {
-
-            //            }
+            //            MethodInfo info = type.GetMethod("Invoke");
+            //            ParameterInfo[] _paraminfos = info.GetParameters();
+            //            ParameterInfo _returnpi = info.ReturnParameter;
             //        }
             //    }
             //}
 
-            List<MemberInfo> delegateList = new List<MemberInfo>();
+            List<Type> delegateList = new List<Type>();
             //识别需要Inject的方法有哪些类型
             foreach(var method in methodList)
             {
+                ParameterInfo _hr = method.ReturnParameter;
+                ParameterInfo[] _params = method.GetParameters();
+
+                MemberInfo info = delegateList.Find((Type t) =>
+                {
+                    MethodInfo _info = t.GetMethod("Invoke");
+                    ParameterInfo t_hr = _info.ReturnParameter;
+                    ParameterInfo[] t_params = _info.GetParameters();
+                    if(t_params == null || t_params.Length < 1)
+                    {
+                        Console.WriteLine("delegate param null or less 1"+ _info.Name);
+                        return false;
+                    }
+                    else
+                    {
+                        if(t_params[0].Name != typeof(Object).Name)
+                        {
+                            return false;
+                        }
+                    }
+                    if(_params != null)
+                    {
+
+                        //委托会默认把被注入的类作为第一个参数的，所以它比被注入的方法多一个参数
+                        if(_params.Length != t_params.Length - 1)
+                        {
+                            return false;
+                        }
+
+                        for(int i=0;i<_params.Length;++i)
+                        {
+                            ParameterInfo tar_info = _params[i];
+                            ParameterInfo find_info = t_params[i + 1];
+                            if(tar_info.Name != find_info.Name)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if(t_params.Length == 1)
+                        {
+
+                        }
+                    }
+
+                    return false;
+                });
 
             }
 
