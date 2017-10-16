@@ -22,6 +22,7 @@ namespace HotFix
         }
         public override bool Update(float dt)
         {
+            Debug.Log("HotFixLoop code update");
             return true;
         }
         public static HotFixLoop GetInstance()
