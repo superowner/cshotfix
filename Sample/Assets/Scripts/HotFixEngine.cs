@@ -5,6 +5,7 @@
 //        git:https://github.com/lichunlincn/cshotfix
 //
 //======================================================================
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,7 +33,7 @@ namespace LCL
             }
 
             m_AssemblyILR.AllowUnboundCLRMethod = true;
-            Debug.LogError("ILRT 检测是否绑定类：true");
+            Debug.LogWarning("ILRT 检测是否绑定类：true");
             
 
             //注册跨域类
@@ -74,7 +75,7 @@ namespace LCL
             }
             else if (Application.platform == RuntimePlatform.WindowsEditor)
             {
-                string outer_path = Application.dataPath + "/Out/HotFixDll.dll.bytes";
+                dll_path = Application.dataPath + "/Out/HotFixDll.dll.bytes";
                 FileStream fileStream = File.OpenRead(dll_path);
                 if (fileStream != null && fileStream.Length > 0)
                 {
@@ -143,11 +144,11 @@ namespace LCL
 
         public void Update()
         {
-
+            m_HotFixDll.Update(Time.deltaTime);
         }
         public void Destroy()
         {
-
+            m_HotFixDll.OnDestroy();
         }
     }
 }
