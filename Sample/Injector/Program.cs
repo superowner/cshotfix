@@ -12,6 +12,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using LCL;
+using Mono.Cecil.Cil;
+using System.Reflection.Emit;
+using Mono.Cecil;
 
 namespace HotFixInjector
 {
@@ -87,65 +90,116 @@ namespace HotFixInjector
             //    }
             //}
 
-            List<Type> delegateList = new List<Type>();
+            List<MethodData> delegateList = new List<MethodData>();
             //识别需要Inject的方法有哪些类型
             foreach(var method in methodList)
             {
                 ParameterInfo _hr = method.ReturnParameter;
                 ParameterInfo[] _params = method.GetParameters();
 
-                MemberInfo info = delegateList.Find((Type t) =>
+                MemberInfo _find = null;
+
+                if(FindDelegate(_params, _hr, delegateList, out _find))
                 {
-                    MethodInfo _info = t.GetMethod("Invoke");
-                    ParameterInfo t_hr = _info.ReturnParameter;
-                    ParameterInfo[] t_params = _info.GetParameters();
-                    if(t_params == null || t_params.Length < 1)
-                    {
-                        Console.WriteLine("delegate param null or less 1"+ _info.Name);
-                        return false;
-                    }
-                    else
-                    {
-                        if(t_params[0].Name != typeof(Object).Name)
-                        {
-                            return false;
-                        }
-                    }
-                    if(_params != null)
-                    {
+                    //如果已经找到了的话，就不用再添加了
+                }
+                else
+                {
 
-                        //委托会默认把被注入的类作为第一个参数的，所以它比被注入的方法多一个参数
-                        if(_params.Length != t_params.Length - 1)
-                        {
-                            return false;
-                        }
-
-                        for(int i=0;i<_params.Length;++i)
-                        {
-                            ParameterInfo tar_info = _params[i];
-                            ParameterInfo find_info = t_params[i + 1];
-                            if(tar_info.Name != find_info.Name)
-                            {
-                                return false;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if(t_params.Length == 1)
-                        {
-
-                        }
-                    }
-
-                    return false;
-                });
-
+                }
             }
 
 
         }
+        struct MethodData
+        {
+            ParameterInfo[] param;
+            ParameterInfo hr;
+        }
+        private static bool FindDelegate(ParameterInfo[] _params, ParameterInfo _hr, List<Type> delegateList, out MemberInfo info)
+        {
+            info = delegateList.Find((Type t) =>
+            {
+                MethodInfo _info = t.GetMethod("Invoke");
+                ParameterInfo t_hr = _info.ReturnParameter;
+                ParameterInfo[] t_params = _info.GetParameters();
+                if (t_params == null || t_params.Length < 1)
+                {
+                    Console.WriteLine("delegate param null or less 1" + _info.Name);
+                    return false;
+                }
+                else
+                {
+                    if (t_params[0].ParameterType != typeof(Object))
+                    {
+                        return false;
+                    }
+                }
+                if (_params != null)
+                {
 
+                    //委托会默认把被注入的类作为第一个参数的，所以它比被注入的方法多一个参数
+                    if (_params.Length != t_params.Length - 1)
+                    {
+                        return false;
+                    }
+
+                    for (int i = 0; i < _params.Length; ++i)
+                    {
+                        ParameterInfo tar_info = _params[i];
+                        ParameterInfo find_info = t_params[i + 1];
+                        if (tar_info.ParameterType != find_info.ParameterType)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    if (t_params.Length > 1)
+                    {
+                        return false;
+                    }
+                }
+                if (t_hr != null)
+                {
+                    if (_hr == null)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        if (t_hr.ParameterType == _hr.ParameterType)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    if (_hr != null)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+
+            });
+            return info != null;
+        }
+        private static void AddDelegates(List<MethodData> list, Assembly genCode)
+        {
+            //注入delegate
+            //http://www.cnblogs.com/xuanhun/archive/2012/06/03/2532922.html
+
+        }
         private static bool IsNeedInjectType(Type type)
         {
             if(type == null)
