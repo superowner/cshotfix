@@ -38,20 +38,20 @@ namespace HotFixInjector
                 return;
             }
 
-
-            //先生成gen
-            GenCode(dllcode, genpath);
+            List<MethodInfoData> needfixMethods = new List<MethodInfoData>();
+            CollectMethods(dllcode, needfixMethods);
+            //先生成委托gen
+            GenDelegateCode( genpath, needfixMethods);
+            //生成函数变量
+            GenFunctionVar(genpath, needfixMethods);
 
             //编译gen
             MakeGenCode(genbat);
-
         }
 
-        //找到需要注入的方法，并且生成对应的绑定函数
-        private static void GenCode(Assembly dllcode, string  genPath)
+        //找到需要注入的方法
+        private static void CollectMethods(Assembly dllcode, List<MethodInfoData> methodList)
         {
-            List<MethodInfo> methodList = new List<MethodInfo>();
-
             //找到需要注入的方法
             Module[] modules = dllcode.GetModules();
             foreach(var module in modules)
@@ -74,23 +74,25 @@ namespace HotFixInjector
                         {
                             continue;
                         }
-                        methodList.Add(method);
+                        methodList.Add(new MethodInfoData(method, ""));
                     }        
                 }
             }
-
+        }
+        private static void GenDelegateCode(string genPath, List<MethodInfoData> methodList)
+        {
             List<MethodData> delegateList = new List<MethodData>();
             //识别需要Inject的方法有哪些类型
             foreach(var method in methodList)
             {
-                ParameterInfo _hr = method.ReturnParameter;
-                ParameterInfo[] _params = method.GetParameters();
+                ParameterInfo _hr = method.methodinfo.ReturnParameter;
+                ParameterInfo[] _params = method.methodinfo.GetParameters();
 
                 MethodData _find = null;
                 FindFlag flag = FindDelegate(_params, _hr, delegateList, out _find);
                 if(flag == FindFlag.NotFind)
                 {
-                    _find = new MethodData() {param = _params, hr = _hr };
+                    _find = new MethodData() {param = _params, hr = _hr, methodInfo = method };
                     delegateList.Add(_find);
                 }
             }
@@ -108,6 +110,18 @@ namespace HotFixInjector
             public ParameterInfo[] param;
             public ParameterInfo hr;
             public string name;
+            public MethodInfoData methodInfo;
+        }
+
+        class MethodInfoData
+        {
+            public MethodInfo methodinfo;
+            public string delegatename;
+            public MethodInfoData(MethodInfo info, string name)
+            {
+                methodinfo = info;
+                delegatename = name;
+            }
         }
         private static FindFlag FindDelegate(ParameterInfo[] _params, ParameterInfo _hr, List<MethodData> delegateList, out MethodData info)
         {
@@ -181,6 +195,19 @@ namespace HotFixInjector
             }
             return find;
         }
+
+
+
+        private static void GenFunctionVar( string genFilePath, List<MethodInfoData> list)
+        {
+            if (list == null || list.Count == 0)
+            {
+                return;
+            }
+            //写delegate文件
+            //StreamWriter sw = new StreamWriter(Path.Combine(genFilePath, "HotFixDelegate.cs"));
+
+        }
         private static void AddDelegates(List<MethodData> list, string genFilePath)
         {
             if(list == null || list.Count ==0)
@@ -188,7 +215,7 @@ namespace HotFixInjector
                 return;
             }
             //写delegate文件
-            StreamWriter sw = new StreamWriter(genFilePath);
+            StreamWriter sw = new StreamWriter(Path.Combine( genFilePath , "HotFixDelegate.cs"));
             sw.WriteLine("//======================================================================"+Environment.NewLine+
                         "//                                                                       "+Environment.NewLine+
                         "//        created by lichunlin                                           "+Environment.NewLine+
@@ -207,6 +234,10 @@ namespace HotFixInjector
             foreach(MethodData md in list)
             {
                 string name = (md.name == "" || md.name == null)? "delegate_" + index.ToString() : md.name;
+
+                //初始化方法对应的委托的名字
+                md.methodInfo.delegatename = name;
+
                 index++;
                 ParameterInfo _hr = md.hr;
                 string hr_string = _hr == null ? "void" : GetParameterTypeName(_hr);
