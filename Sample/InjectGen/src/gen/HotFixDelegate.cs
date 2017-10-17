@@ -1,11 +1,16 @@
-﻿using System.Collections;
-using System;
-
+//======================================================================
+//                                                                       
+//        created by lichunlin                                           
+//        qq:576067421                                                   
+//        git:https://github.com/lichunlincn/cshotfix                    
+//                                                                       
+//====================================================================== 
+using System.Collections; 
+using System; 
 namespace HotFix
 {
-    namespace HotFixDelegate
-    {
-        public delegate void CtrDelegate(object param0);
-        public delegate int DelegateImp0(object param0, string param1, int param2, out float param3);
-    }
+       namespace HotFixDelegate
+       {
+           public delegate object delegate_0(object _this);
+       }
 }
