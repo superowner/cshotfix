@@ -8,13 +8,17 @@ namespace LCL
 {
     namespace Logic
     {
+        public class ClassData
+        {
+
+        }
         public class InjectSample
         {
             public InjectSample()
             {
 
             }
-            public int TestInject(float a, string str, ref int refint, out string outstr)
+            public int TestInject(float a, ref Vector3 v3, string str, ref int refint, ref ClassData data , out string outstr)
             {
                 refint = 0;
                 outstr = "Mono code";

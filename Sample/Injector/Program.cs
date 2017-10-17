@@ -65,6 +65,11 @@ namespace HotFixInjector
                     }
                     foreach(var method in type.GetMethods())
                     {
+                        //跳过基类的方法
+                        if(method.DeclaringType != null &&  method.DeclaringType.Name != type.Name)
+                        {
+                            continue;
+                        }
                         if(!IsNeedInjectMethod(method))
                         {
                             continue;
@@ -114,19 +119,6 @@ namespace HotFixInjector
                 info = delegateList[n];
                 ParameterInfo t_hr = info.hr;
                 ParameterInfo[] t_params = info.param;
-                if (t_params == null || t_params.Length < 1)
-                {
-                    Console.WriteLine("delegate param null or less 1");
-                    return FindFlag.Error;
-                }
-                else
-                {
-                    if (t_params[0].ParameterType != typeof(object))
-                    {
-                        Console.WriteLine("委托的第一个参数不是object类型");
-                        return FindFlag.Error;
-                    }
-                }
                 //先比较返回值情况
                 if (t_hr != null)
                 {
@@ -160,15 +152,14 @@ namespace HotFixInjector
                 //比较参数
                 if (_params != null)
                 {
-                    //委托会默认把被注入的类作为第一个参数的，所以它比被注入的方法多一个参数
-                    if (_params.Length != t_params.Length - 1)
+                    if(t_params == null || _params.Length != t_params.Length)
                     {
                         continue;
                     }
                     for (int i = 0; i < _params.Length; ++i)
                     {
                         ParameterInfo tar_info = _params[i];
-                        ParameterInfo find_info = t_params[i + 1];
+                        ParameterInfo find_info = t_params[i];
                         if(tar_info.ParameterType.IsSubclassOf(typeof(object)) && find_info.ParameterType.IsSubclassOf(typeof(object)))
                         {
 
@@ -181,7 +172,7 @@ namespace HotFixInjector
                 }
                 else
                 {
-                    if (t_params.Length > 1)
+                    if(t_params != null)
                     {
                         continue;
                     }
@@ -218,7 +209,7 @@ namespace HotFixInjector
                 string name = (md.name == "" || md.name == null)? "delegate_" + index.ToString() : md.name;
                 index++;
                 ParameterInfo _hr = md.hr;
-                string hr_string = _hr == null ? "void" : GetParameterName(_hr);
+                string hr_string = _hr == null ? "void" : GetParameterTypeName(_hr);
                 ParameterInfo[] _params = md.param;
                 string params_string = "object _this";
                 if(_params != null && _params.Length > 0)
@@ -227,9 +218,9 @@ namespace HotFixInjector
                     for(int i =1;i<count;++i)
                     {
                         ParameterInfo info = _params[i];
-                        string ref_str = info.IsRetval ? " ref " : "";
+                        string ref_str = info.IsOut ?"":(info.ParameterType.IsByRef ? " ref " : "");
                         string out_str = info.IsOut ? " out " : "";
-                        string param_type_string = GetParameterName(info);
+                        string param_type_string = GetParameterTypeName(info);
                         params_string += "," + ref_str + out_str + param_type_string + " _param"+ i.ToString()+"_"+ GetParamterNickName(info);
                     }
                 }
@@ -247,24 +238,89 @@ namespace HotFixInjector
         {
             return info.ParameterType.Name.Replace("[", "").Replace("]", "").Replace("`", "").Replace("&","");
         }
-        private static string GetParameterName(ParameterInfo info)
+        private static string GetParameterTypeName(ParameterInfo info)
         {
             string param_type_string = "object";
-            if (!info.ParameterType.IsSubclassOf(typeof(object)))
+            if(info.ParameterType.IsPrimitive)
             {
                 param_type_string = info.ParameterType.Name;
+            }
+            else if(info.ParameterType.IsClass)
+            {
+                param_type_string = "object";
+                if(info.ParameterType.Name.Contains("&"))
+                {
+                    string shortname = info.ParameterType.FullName.Replace("&", "");
+                    Type type = Type.GetType(shortname);
+                    if(type != null)
+                    {
+                        if(type.IsPrimitive || IsOtherPrimitive(shortname))
+                        {
+                            param_type_string = shortname;
+                        }
+                    }
+                    else
+                    {
+                         //不是系统的基础类型，查看是否是我们关心的基础类型
+                        if(IsOtherPrimitive(shortname))
+                        {
+                            param_type_string = shortname;
+                        }   
+                    }
+
+
+                }
+                else
+                {
+                    if (info.ParameterType == typeof(String))
+                    {
+                        param_type_string = "String";
+                    }
+                }
+
+
+            }
+            else
+            {
+                param_type_string = info.ParameterType.FullName;
+            }
+            if(param_type_string == "Void" || param_type_string == "System.Void")
+            {
+                param_type_string = "void";
             }
             return param_type_string;
         }
 
+        private static bool IsOtherPrimitive(string name)
+        {
+            name = name.ToLower();
+            if(name.Contains("unityengine.vector2")||
+               name.Contains("unityengine.vector3") ||
+               name.Contains("unityengine.quaternion") ||
+               name.Contains("unityengine.vector4") ||
+               name.Contains("unityengine.ray") ||
+               name.Contains("system.string"))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
         private static bool IsNeedInjectType(Type type)
         {
             if(type == null)
             {
                 return false;
             }
-            if (type.Name.Contains("<") || type.IsInterface || type.GetMethods().Length == 0) // skip anonymous type and interface
+            if (type.Namespace == null || type.Name.Contains("<") || type.IsInterface || type.GetMethods().Length == 0) // skip anonymous type and interface
             {
+                return false;
+            }
+            else if(!type.Namespace.Contains("LCL.Logic"))
+            {
+                //这里假设只有Mono的逻辑代码会出错
                 return false;
             }
             else
