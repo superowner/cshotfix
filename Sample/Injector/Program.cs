@@ -215,7 +215,7 @@ namespace HotFixInjector
                 if(_params != null && _params.Length > 0)
                 {
                     int count = _params.Length;
-                    for(int i =1;i<count;++i)
+                    for(int i =0;i<count;++i)
                     {
                         ParameterInfo info = _params[i];
                         string ref_str = info.IsOut ?"":(info.ParameterType.IsByRef ? " ref " : "");
