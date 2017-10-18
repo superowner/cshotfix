@@ -64,6 +64,16 @@ namespace HotFixInjector
                     {
                         continue;
                     }
+                    //处理类的构造函数
+                    foreach(var ctr in type.GetConstructors())
+                    {
+                        if (!IsNeedInjectMethod(ctr))
+                        {
+                            continue;
+                        }
+                        methodList.Add(new MethodInfoData(ctr, ""));
+                    }
+                    //处理方法
                     foreach(var method in type.GetMethods())
                     {
                         //跳过基类的方法
@@ -83,21 +93,35 @@ namespace HotFixInjector
         private static void GenDelegateCode(string genPath, List<MethodInfoData> methodList)
         {
             List<MethodData> delegateList = new List<MethodData>();
+            int index = 0;
             //识别需要Inject的方法有哪些类型
             foreach(var method in methodList)
             {
-                ParameterInfo _hr = method.methodinfo.ReturnParameter;
+                ParameterInfo _hr = null;
+                if (method.methodinfo is MethodInfo)
+                {
+                    //构造函数没有返回值，这里只有方法可能有
+                    _hr = (method.methodinfo as MethodInfo).ReturnParameter;
+                }
                 ParameterInfo[] _params = method.methodinfo.GetParameters();
 
                 MethodData _find = null;
                 FindFlag flag = FindDelegate(_params, _hr, delegateList, out _find);
-                if(flag == FindFlag.NotFind)
+                if (flag == FindFlag.NotFind)
                 {
-                    _find = new MethodData() {param = _params, hr = _hr, methodInfo = method };
+                    _find = new MethodData() { param = _params, hr = _hr, methodInfo = method };
                     delegateList.Add(_find);
-                }
-            }
 
+                    //设置委托名字
+                    _find.methodInfo.delegatename = (_find.name == "" || _find.name == null) ? "delegate_" + index.ToString() : _find.name;
+                }
+                else if(flag == FindFlag.Find)
+                {
+                    //直接设置委托名字
+                    method.delegatename = _find.methodInfo.delegatename;
+                }
+                index++;
+            }
             AddDelegates(delegateList, genPath);
         }
         public enum FindFlag
@@ -116,12 +140,12 @@ namespace HotFixInjector
 
         class MethodInfoData
         {
-            public MethodInfo methodinfo;
+            public MethodBase methodinfo;
             //委托类型名字
             public string delegatename;
             //方法对应的函数变量
             public string functionname;
-            public MethodInfoData(MethodInfo info, string name)
+            public MethodInfoData(MethodBase info, string name)
             {
                 methodinfo = info;
                 delegatename = name;
@@ -231,7 +255,7 @@ namespace HotFixInjector
             {
                 MethodInfoData mid = list[i];
                 string classname = mid.methodinfo.ReflectedType.FullName.ToLower().Replace(".","__") + "__";
-                string methodname = mid.methodinfo.Name + "__";
+                string methodname = mid.methodinfo.Name.Replace(".","_") + "__";
                 string name = classname + methodname + "0";
                 int index = 1;
                 //可能存在函数重载
@@ -248,7 +272,8 @@ namespace HotFixInjector
 
                 //输出一行
                 //public static DelegateImp0 __hotfix__GameMono__GameLoop__HelloWorld0;
-                sw.WriteLine("          public static " + mid.delegatename + " " + name + ";");
+                string linestr = "          public static " + mid.delegatename + " " + name + ";";
+                sw.WriteLine(linestr);
             }
             sw.WriteLine("       }" + Environment.NewLine +
              "}");
@@ -277,15 +302,8 @@ namespace HotFixInjector
                          "       namespace HotFixDelegate"+Environment.NewLine+
                          "       {");
 
-            int index = 0;
             foreach(MethodData md in list)
             {
-                string name = (md.name == "" || md.name == null)? "delegate_" + index.ToString() : md.name;
-
-                //初始化方法对应的委托的名字
-                md.methodInfo.delegatename = name;
-
-                index++;
                 ParameterInfo _hr = md.hr;
                 string hr_string = _hr == null ? "void" : GetParameterTypeName(_hr);
                 ParameterInfo[] _params = md.param;
@@ -303,7 +321,7 @@ namespace HotFixInjector
                     }
                 }
 
-                string line_string = "           public delegate " + hr_string + " " + name + "(" + params_string + ");";
+                string line_string = "           public delegate " + hr_string + " " + md.methodInfo.delegatename + "(" + params_string + ");";
                 sw.WriteLine(line_string);
             }
 
@@ -406,7 +424,7 @@ namespace HotFixInjector
                 return true;
             }
         }
-        private static bool IsNeedInjectMethod(MethodInfo method)
+        private static bool IsNeedInjectMethod(MethodBase method)
         {
             if(method == null)
             {
