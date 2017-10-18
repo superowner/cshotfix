@@ -11,6 +11,7 @@ namespace ILRuntime.Runtime.Generated
         /// </summary>
         public static void Initialize(ILRuntime.Runtime.Enviorment.AppDomain app)
         {
+            UnityEngine_Debug_Binding.Register(app);
         }
     }
 }
