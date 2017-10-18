@@ -31,7 +31,8 @@ namespace HotFixInjector
             string genpath = Path.GetFullPath(args[1]);
             string genbat = Path.GetFullPath(args[2]);
 
-            Assembly dllcode = Assembly.LoadFrom(dll);
+            //这里貌似只能使用工程中引用的程序集，不能使用外部的dll，原因不明白，知道的可以帮忙解释下
+            Assembly dllcode = Assembly.Load("Assembly-CSharp");
             if(dllcode == null)
             {
                 Console.WriteLine("dll not find path:"+dll);
@@ -116,7 +117,10 @@ namespace HotFixInjector
         class MethodInfoData
         {
             public MethodInfo methodinfo;
+            //委托类型名字
             public string delegatename;
+            //方法对应的函数变量
+            public string functionname;
             public MethodInfoData(MethodInfo info, string name)
             {
                 methodinfo = info;
@@ -205,8 +209,51 @@ namespace HotFixInjector
                 return;
             }
             //写delegate文件
-            //StreamWriter sw = new StreamWriter(Path.Combine(genFilePath, "HotFixDelegate.cs"));
+            StreamWriter sw = new StreamWriter(Path.Combine(genFilePath, "HotFixFunction.cs"));
+            sw.WriteLine("//======================================================================" + Environment.NewLine +
+            "//                                                                       " + Environment.NewLine +
+            "//        created by lichunlin                                           " + Environment.NewLine +
+            "//        qq:576067421                                                   " + Environment.NewLine +
+            "//        git:https://github.com/lichunlincn/cshotfix                    " + Environment.NewLine +
+            "//                                                                       " + Environment.NewLine +
+            "//====================================================================== " + Environment.NewLine +
+            "using System.Collections; " + Environment.NewLine +
+             "using System; " + Environment.NewLine +
+             "using HotFix.HotFixDelegate; " + Environment.NewLine +
+             "namespace HotFix" + Environment.NewLine +
+             "{" + Environment.NewLine +
+             "       public class HotFixFunction" + Environment.NewLine +
+             "       {");
+            int count = list.Count;
+            //检测是否有相同名称的，有的话就用序号表示
+            Dictionary<string, MethodInfoData> temp = new Dictionary<string, MethodInfoData>();
+            for (int i = 0; i < count; ++i)
+            {
+                MethodInfoData mid = list[i];
+                string classname = mid.methodinfo.ReflectedType.FullName.ToLower().Replace(".","__") + "__";
+                string methodname = mid.methodinfo.Name + "__";
+                string name = classname + methodname + "0";
+                int index = 1;
+                //可能存在函数重载
+                while (temp.ContainsKey(name))
+                {
+                    name = classname + methodname + index.ToString();
+                    index++;
 
+                }
+                temp.Add(name, mid);
+
+                //求出方法和对应的委托函数变量的对应关系，注入到mono代码需要
+                mid.functionname = name;
+
+                //输出一行
+                //public static DelegateImp0 __hotfix__GameMono__GameLoop__HelloWorld0;
+                sw.WriteLine("          public static " + mid.delegatename + " " + name + ";");
+            }
+            sw.WriteLine("       }" + Environment.NewLine +
+             "}");
+            sw.Flush();
+            sw.Close();
         }
         private static void AddDelegates(List<MethodData> list, string genFilePath)
         {

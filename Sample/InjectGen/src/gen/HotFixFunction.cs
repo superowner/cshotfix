@@ -1,13 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+//======================================================================
+//                                                                       
+//        created by lichunlin                                           
+//        qq:576067421                                                   
+//        git:https://github.com/lichunlincn/cshotfix                    
+//                                                                       
+//====================================================================== 
+using System.Collections; 
+using System; 
+using HotFix.HotFixDelegate; 
 namespace HotFix
 {
-    public class HotFixFunction
-    {
-        //public static HotFixDelegate.CtrDelegate __hotfix__GameMono_GameLoop_ctr0;
-        //public static HotFixDelegate.DelegateImp0 __hotfix__GameMono__GameLoop__HelloWorld0;
-    }
+       public class HotFixFunction
+       {
+          public static delegate_0 lcl__logic__injectsample__TestInject__0;
+       }
 }
