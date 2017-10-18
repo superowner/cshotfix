@@ -50,6 +50,7 @@ namespace HotFixInjector
             MakeGenCode(genbat);
         }
 
+
         //找到需要注入的方法
         private static void CollectMethods(Assembly dllcode, List<MethodInfoData> methodList)
         {
@@ -330,6 +331,11 @@ namespace HotFixInjector
             sw.Flush();
             sw.Close();
         }
+
+
+
+
+
         private static string GetParamterNickName(ParameterInfo info)
         {
             return info.ParameterType.Name.Replace("[", "").Replace("]", "").Replace("`", "").Replace("&","");
