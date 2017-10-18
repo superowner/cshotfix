@@ -17,11 +17,52 @@ namespace ILRuntimeGenTool
             string bindroot = Path.GetFullPath("../../../ILRuntimeGen");
             string bindgen = Path.Combine(bindroot, "src");
 
-            ILRuntimeCLRBinding.GenerateCLRBindingByAnalysis(injectGen, bindgen);
-            ILRuntimeCLRBinding.GenerateCLRBindingByAnalysis(hotdll, bindgen);
+            string[] oldFiles = System.IO.Directory.GetFiles(bindgen, "*.cs");
+            foreach (var i in oldFiles)
+            {
+                System.IO.File.Delete(i);
+            }
+
+            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.ClearClassNames();
+
+            ILRuntime.Runtime.Enviorment.AppDomain domain_injectgen = new ILRuntime.Runtime.Enviorment.AppDomain();
+            using (System.IO.FileStream fs = new System.IO.FileStream(injectGen, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+            {
+                domain_injectgen.LoadAssembly(fs);
+            }
+            InitILRuntime_InjectGen(domain_injectgen);
+            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.GenerateBindingCode(domain_injectgen, bindgen);
+
+            ILRuntime.Runtime.Enviorment.AppDomain domain_hotdll = new ILRuntime.Runtime.Enviorment.AppDomain();
+            using (System.IO.FileStream fs = new System.IO.FileStream(hotdll, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+            {
+                domain_hotdll.LoadAssembly(fs);
+            }
+
+            InitILRuntime_HotDll(domain_hotdll);
+            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.GenerateBindingCode(domain_hotdll, bindgen);
+
+            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.GenerateCLRBindingsCode(bindgen);
+
+            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.ClearClassNames();
 
             AddVSProject(bindroot);
 
+        }
+
+        static void InitILRuntime_InjectGen(ILRuntime.Runtime.Enviorment.AppDomain domain)
+        {
+
+        }
+
+
+        static void InitILRuntime_HotDll(ILRuntime.Runtime.Enviorment.AppDomain domain)
+        {
+            //这里需要注册所有热更DLL中用到的跨域继承Adapter，否则无法正确抓取引用
+            //domain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());
+            //domain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
+            domain.RegisterCrossBindingAdaptor(new IGameHotFixInterfaceAdapter());
+            //domain.RegisterCrossBindingAdaptor(new ISerializePacketAdapter());
         }
 
 
