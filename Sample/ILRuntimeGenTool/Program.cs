@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Xml;
 
@@ -31,7 +32,9 @@ namespace ILRuntimeGenTool
                 domain_injectgen.LoadAssembly(fs);
             }
             InitILRuntime_InjectGen(domain_injectgen);
-            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.GenerateBindingCode(domain_injectgen, bindgen);
+            Assembly injectdll = Assembly.Load("InjectGen");
+            List<Type> types = injectdll.GetTypes().ToList();
+            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.GenerateBindingCode(types, bindgen);
 
             ILRuntime.Runtime.Enviorment.AppDomain domain_hotdll = new ILRuntime.Runtime.Enviorment.AppDomain();
             using (System.IO.FileStream fs = new System.IO.FileStream(hotdll, System.IO.FileMode.Open, System.IO.FileAccess.Read))
@@ -41,7 +44,6 @@ namespace ILRuntimeGenTool
 
             InitILRuntime_HotDll(domain_hotdll);
             ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.GenerateBindingCode(domain_hotdll, bindgen);
-
             ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.GenerateCLRBindingsCode(bindgen);
 
             ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.ClearClassNames();

@@ -21,7 +21,6 @@ namespace ILRuntime.Runtime.CLRBinding
             //{
             //    System.IO.File.Delete(i);
             //}
-            List<string> clsNames = new List<string>();
             foreach (var i in types)
             {
                 string clsName, realClsName;
@@ -29,7 +28,7 @@ namespace ILRuntime.Runtime.CLRBinding
                 if (i.GetCustomAttributes(typeof(ObsoleteAttribute), true).Length > 0)
                     continue;
                 i.GetClassName(out clsName, out realClsName, out isByRef);
-                clsNames.Add(clsName);
+                m_ClassNames.Add(clsName);
                 using (System.IO.StreamWriter sw = new System.IO.StreamWriter(outputPath + "/" + clsName + ".cs", false, Encoding.UTF8))
                 {
                     sw.Write(@"using System;
@@ -88,33 +87,6 @@ namespace ILRuntime.Runtime.Generated
                     sw.WriteLine("}");
                     sw.Flush();
                 }
-            }
-
-            using (System.IO.StreamWriter sw = new System.IO.StreamWriter(outputPath + "/CLRBindings.cs", false, Encoding.UTF8))
-            {
-                sw.WriteLine(@"using System;
-using System.Collections.Generic;
-using System.Reflection;
-
-namespace ILRuntime.Runtime.Generated
-{
-    class CLRBindings
-    {
-        /// <summary>
-        /// Initialize the CLR binding, please invoke this AFTER CLR Redirection registration
-        /// </summary>
-        public static void Initialize(ILRuntime.Runtime.Enviorment.AppDomain app)
-        {");
-                foreach (var i in clsNames)
-                {
-                    sw.Write("            ");
-                    sw.Write(i);
-                    sw.WriteLine(".Register(app);");
-                }
-
-                sw.WriteLine(@"        }
-    }
-}");
             }
         }
 
