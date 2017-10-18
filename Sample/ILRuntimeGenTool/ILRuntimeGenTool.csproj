@@ -36,7 +36,10 @@
       <HintPath>..\Library\ScriptAssemblies\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="ILRuntimeDll">
-      <HintPath>..\ILRuntimeDll\bin\Debug\ILRuntimeDll.dll</HintPath>
+      <HintPath>..\Assets\Plugins\ILRuntimeDll.dll</HintPath>
+    </Reference>
+    <Reference Include="InjectGen">
+      <HintPath>..\Assets\Plugins\InjectGen.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

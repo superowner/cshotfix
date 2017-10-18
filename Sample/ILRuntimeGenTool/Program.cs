@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml;
 
 namespace ILRuntimeGenTool
 {
@@ -9,23 +11,110 @@ namespace ILRuntimeGenTool
     {
         static void Main(string[] args)
         {
-            if(args == null)
-            {
-                Console.WriteLine("请输入需要绑定的dll 和 生成代码的路径");
-                return;
-            }
-            if(args.Length == 2)
-            {
-                string hotdll = args[0];
-                string bindgen = args[1];
-                ILRuntimeCLRBinding.GenerateCLRBindingByAnalysis(hotdll, bindgen);
-                Console.WriteLine("bind ok, 请编译ILRuntimeGen工程");
-            }
-            else
-            {
-                Console.WriteLine("参数输入错误");
-                return;
-            }
+            string injectGen =Path.GetFullPath( "../../../Assets/Plugins/InjectGen.dll");
+            string hotdll = Path.GetFullPath("../../../Assets/Out/HotFixDll.dll.bytes");
+
+            string bindroot = Path.GetFullPath("../../../ILRuntimeGen");
+            string bindgen = Path.Combine(bindroot, "src");
+
+            ILRuntimeCLRBinding.GenerateCLRBindingByAnalysis(injectGen, bindgen);
+            ILRuntimeCLRBinding.GenerateCLRBindingByAnalysis(hotdll, bindgen);
+
+            AddVSProject(bindroot);
+
         }
+
+
+        static void AddVSProject(string name)
+        {
+            XmlDocument xmlDoc = new XmlDocument();
+            string csprojpath = Path.Combine(name, "ILRuntimeGen.csproj");
+            xmlDoc.Load(csprojpath);
+            XmlNodeList root_childlist = xmlDoc.ChildNodes;
+            XmlNode root_Project = null; ;
+            foreach (XmlNode xn in root_childlist)
+            {
+                if (xn.Name == "Project")
+                {
+                    root_Project = xn;
+                    break;
+                }
+            }
+            XmlNodeList childlist_Project = root_Project.ChildNodes;//根节点的字节点
+            XmlNode ItemGroup_Compile = null; //编译节点，就是后台代码文件.cs 
+            foreach (XmlNode xn in childlist_Project)
+            {
+                if (xn.Name == "ItemGroup")
+                {
+                    if (xn.FirstChild.Name == "Compile")
+                    {
+                        ItemGroup_Compile = xn;//编译节点
+                        break;
+                    }
+                }
+            }
+            //删除src的节点
+            int count = ItemGroup_Compile.ChildNodes.Count;
+            for (int i = count - 1; i >= 0; --i)
+            {
+                XmlElement node_Compile = (XmlElement)ItemGroup_Compile.ChildNodes[i];
+                string include = node_Compile.GetAttribute("Include");
+                if (include.StartsWith("src\\"))
+                {
+                    ItemGroup_Compile.RemoveChild(node_Compile);
+                }
+            }
+            string srcpath = Path.Combine(name, "src");
+            string[] gen_cs = Directory.GetFiles(srcpath);
+            bool node_dirty = false;
+            foreach (string strfile in gen_cs)
+            {
+                XmlElement node_Compile = xmlDoc.CreateElement("Compile", xmlDoc.DocumentElement.NamespaceURI);
+                string shortName = Path.GetFileName(strfile);
+                string node_name = "src\\" + shortName;
+
+                if (!IsNodeHas(ItemGroup_Compile, node_name))
+                {
+                    node_Compile.SetAttribute("Include", node_name);
+                    ItemGroup_Compile.AppendChild(node_Compile);
+                    node_dirty = true;
+                }
+            }
+            if (node_dirty)
+            {
+                xmlDoc.Save(csprojpath);
+            }
+            xmlDoc = null;
+        }
+
+        private static bool IsNodeHas(XmlNode ItemGroup_Compile, string name)
+        {
+            //查找是否已经添加了该文件
+            int count = ItemGroup_Compile.ChildNodes.Count;
+            for (int i = count - 1; i >= 0; --i)
+            {
+                XmlElement node_Compile = (XmlElement)ItemGroup_Compile.ChildNodes[i];
+                string include = node_Compile.GetAttribute("Include");
+                if (include.Contains(name))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }
