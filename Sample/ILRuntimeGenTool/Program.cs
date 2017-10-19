@@ -21,9 +21,18 @@ namespace ILRuntimeGenTool
 
             AddVSProject(bindroot);
 
+            MakeGenCode(Path.Combine(bindroot, "make.bat"));
+
         }
 
-
+        private static void MakeGenCode(string bat)
+        {
+            System.Diagnostics.Process process = new System.Diagnostics.Process();
+            process.StartInfo.FileName = bat;
+            process.StartInfo.UseShellExecute = true;
+            process.Start();
+            process.WaitForExit();
+        }
         static void AddVSProject(string name)
         {
             XmlDocument xmlDoc = new XmlDocument();
