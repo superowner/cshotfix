@@ -13,14 +13,43 @@ using System.Reflection;
 using System.Text;
 using LCL;
 using Mono.Cecil.Cil;
-using System.Reflection.Emit;
 using Mono.Cecil;
 
 namespace HotFixInjector
 {
+
+    public enum FindFlag
+    {
+        Error = -1,
+        Find = 0,
+        NotFind = 1
+    }
+    class MethodData
+    {
+        public ParameterInfo[] param;
+        public ParameterInfo hr;
+        public string name;
+        public MethodInfoData methodInfo;
+    }
+
+    public class MethodInfoData
+    {
+        public MethodBase methodinfo;
+        //委托类型名字
+        public string delegatename;
+        //方法对应的函数变量
+        public string functionname;
+        public MethodInfoData(MethodBase info, string name)
+        {
+            methodinfo = info;
+            delegatename = name;
+        }
+    }
     class Program
     {
         private static TypeReference m_InjectRef = null;
+        private static TypeDefinition m_FuncDef = null;
+
         static void Main(string[] args)
         {
             bool testinject = true;
@@ -55,12 +84,24 @@ namespace HotFixInjector
             AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(assembly_path, readerParameters);
 
             m_InjectRef = assembly.MainModule.ImportReference(typeof(InjectAttribute));
-
             //if (assembly.Modules.Any(module => module.Types.Any(x => x.Namespace == "__CSHotFix" && x.Name == "INJECTED")))
             //{
             //    Console.WriteLine("This Assembly is already injected!");
             //    return;
             //}
+
+            foreach (var module in assembly.Modules)
+            {
+                foreach (var typ in module.Types)
+                {
+                    if (typ.FullName == typeof(HotFix.HotFixFunction).FullName)
+                    {
+                        m_FuncDef = typ;
+                        break;
+                    }
+                }
+            }
+
 
             foreach (var module in assembly.Modules)
             {
@@ -96,74 +137,122 @@ namespace HotFixInjector
 
         public static void InjectMethod(TypeDefinition type, MethodDefinition method)
         {
-            //if (type.Name.Contains("<") || type.IsInterface || type.Methods.Count == 0) // skip anonymous type and interface
-            //    return;
-            //if (method.Name == ".cctor")
-            //    return;
-            //TypeDefinition delegateTypeRef = type.Module.Types.Single(t => t.FullName == "HotFixBridge");
+            if (type.Name.Contains("<") || type.IsInterface || type.Methods.Count == 0) // skip anonymous type and interface
+                return;
+            if (method.Name == ".cctor")
+                return;
 
-            //if (delegateTypeRef != null)
+            var funcVar = FunctionMap.GetFunctionField(m_FuncDef, method);
+            //FieldDefinition item = new FieldDefinition(delegateFieldName, FieldAttributes.Static | FieldAttributes.Public, delegateTypeRef);
+            //FieldReference parameter = item.FieldType.Resolve().Fields.Single(field => field.Name == "Parameters");
+
+
+            //var invokeDeclare = type.Module.ImportReference(delegateTypeRef.Methods.Single(x => x.Name == "Invoke"));
+            //if (!method.HasBody)
+            //    return;
+            ////记住方法原来的开始插入点
+            //var insertPoint = method.Body.Instructions[0];
+            //var ilGenerator = method.Body.GetILProcessor();
+
+            ////插入注入代码
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
+            ////如果为false还原插入点
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Brfalse, insertPoint));
+
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldfld, parameter));
+            //ilGenerator.InsertBefore(insertPoint, CreateLoadIntConst(ilGenerator, 0));
+            //if (method.IsStatic)
             //{
-            //    delegateTypeRef = type.Module.Types.Single(x => x.Name == "HotFixBridge");
-            //    string delegateFieldName = GenerateMethodName(method);
-            //    FieldDefinition item = new FieldDefinition(delegateFieldName, FieldAttributes.Static | FieldAttributes.Public, delegateTypeRef);
-            //    FieldReference parameter = item.FieldType.Resolve().Fields.Single(field => field.Name == "Parameters");
-
-            //    type.Fields.Add(item);
-
-            //    var invokeDeclare = type.Module.ImportReference(delegateTypeRef.Methods.Single(x => x.Name == "Invoke"));
-            //    if (!method.HasBody)
-            //        return;
-            //    var insertPoint = method.Body.Instructions[0];
-            //    var ilGenerator = method.Body.GetILProcessor();
-            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
-            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Brfalse, insertPoint));
-
-            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
-            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
-            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldfld, parameter));
-            //    ilGenerator.InsertBefore(insertPoint, CreateLoadIntConst(ilGenerator, 0));
-            //    if (method.IsStatic)
-            //    {
-            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldnull));
-            //    }
-            //    else
-            //    {
-            //        ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, 0));
-            //    }
-            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Stelem_Ref));
-
-            //    for (int i = 0; i < method.Parameters.Count; i++)
-            //    {
-            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
-            //        //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
-            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldfld, parameter));
-
-            //        int index = (i + (method.IsStatic ? 0 : 1));
-            //        ilGenerator.InsertBefore(insertPoint, CreateLoadIntConst(ilGenerator, i + 1));
-            //        ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, index));
-
-            //        if (method.Parameters[i].ParameterType.IsValueType)
-            //        {
-            //            ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Box, method.Parameters[i].ParameterType));
-            //        }
-
-            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Stelem_Ref));
-            //    }
-
-            //    //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
-            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Call, invokeDeclare));
-
-            //    if (method.ReturnType.Name == "Void")
-            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Pop));
-            //    else if (method.ReturnType.IsValueType)
-            //    {
-            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Unbox_Any, method.ReturnType));
-            //    }
-            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ret));
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldnull));
             //}
+            //else
+            //{
+            //    ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, 0));
+            //}
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Stelem_Ref));
+
+            //for (int i = 0; i < method.Parameters.Count; i++)
+            //{
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
+            //    //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldfld, parameter));
+
+            //    int index = (i + (method.IsStatic ? 0 : 1));
+            //    ilGenerator.InsertBefore(insertPoint, CreateLoadIntConst(ilGenerator, i + 1));
+            //    ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, index));
+
+            //    if (method.Parameters[i].ParameterType.IsValueType)
+            //    {
+            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Box, method.Parameters[i].ParameterType));
+            //    }
+
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Stelem_Ref));
+            //}
+
+            ////ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Call, invokeDeclare));
+
+            //if (method.ReturnType.Name == "Void")
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Pop));
+            //else if (method.ReturnType.IsValueType)
+            //{
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Unbox_Any, method.ReturnType));
+            //}
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ret));
+
         }
 
+
+        private static Instruction CreateLoadIntConst(ILProcessor ilGenerator, int c)
+        {
+            switch (c)
+            {
+                case 0:
+                    return ilGenerator.Create(OpCodes.Ldc_I4_0);
+                case 1:
+                    return ilGenerator.Create(OpCodes.Ldc_I4_1);
+                case 2:
+                    return ilGenerator.Create(OpCodes.Ldc_I4_2);
+                case 3:
+                    return ilGenerator.Create(OpCodes.Ldc_I4_3);
+                case 4:
+                    return ilGenerator.Create(OpCodes.Ldc_I4_4);
+                case 5:
+                    return ilGenerator.Create(OpCodes.Ldc_I4_5);
+                case 6:
+                    return ilGenerator.Create(OpCodes.Ldc_I4_6);
+                case 7:
+                    return ilGenerator.Create(OpCodes.Ldc_I4_7);
+                case 8:
+                    return ilGenerator.Create(OpCodes.Ldc_I4_8);
+                case -1:
+                    return ilGenerator.Create(OpCodes.Ldc_I4_M1);
+            }
+            if (c >= sbyte.MinValue && c <= sbyte.MaxValue)
+                return ilGenerator.Create(OpCodes.Ldc_I4_S, (sbyte)c);
+
+            return ilGenerator.Create(OpCodes.Ldc_I4, c);
+        }
+        private static Instruction CreateLoadArg(ILProcessor ilGenerator, int c)
+        {
+            switch (c)
+            {
+                case 0:
+                    return ilGenerator.Create(OpCodes.Ldarg_0);
+                case 1:
+                    return ilGenerator.Create(OpCodes.Ldarg_1);
+                case 2:
+                    return ilGenerator.Create(OpCodes.Ldarg_2);
+                case 3:
+                    return ilGenerator.Create(OpCodes.Ldarg_3);
+            }
+            if (c > 0 && c < byte.MaxValue)
+                return ilGenerator.Create(OpCodes.Ldarg_S, (byte)c);
+
+            return ilGenerator.Create(OpCodes.Ldarg, c);
+        }
 
         //找到需要注入的方法
         private static void CollectMethods(Assembly dllcode, List<MethodInfoData> methodList)
@@ -239,33 +328,7 @@ namespace HotFixInjector
             }
             AddDelegates(delegateList, genPath);
         }
-        public enum FindFlag
-        {
-            Error =-1,
-            Find =0,
-            NotFind =1
-        }
-        class MethodData
-        {
-            public ParameterInfo[] param;
-            public ParameterInfo hr;
-            public string name;
-            public MethodInfoData methodInfo;
-        }
 
-        class MethodInfoData
-        {
-            public MethodBase methodinfo;
-            //委托类型名字
-            public string delegatename;
-            //方法对应的函数变量
-            public string functionname;
-            public MethodInfoData(MethodBase info, string name)
-            {
-                methodinfo = info;
-                delegatename = name;
-            }
-        }
         private static FindFlag FindDelegate(ParameterInfo[] _params, ParameterInfo _hr, List<MethodData> delegateList, out MethodData info)
         {
             FindFlag find = FindFlag.NotFind;
@@ -338,9 +401,6 @@ namespace HotFixInjector
             }
             return find;
         }
-
-
-
         private static void GenFunctionVar( string genFilePath, List<MethodInfoData> list)
         {
             if (list == null || list.Count == 0)
@@ -369,17 +429,7 @@ namespace HotFixInjector
             for (int i = 0; i < count; ++i)
             {
                 MethodInfoData mid = list[i];
-                string classname = mid.methodinfo.ReflectedType.FullName.ToLower().Replace(".","__") + "__";
-                string methodname = mid.methodinfo.Name.Replace(".","_") + "__";
-                string name = classname + methodname + "0";
-                int index = 1;
-                //可能存在函数重载
-                while (temp.ContainsKey(name))
-                {
-                    name = classname + methodname + index.ToString();
-                    index++;
-
-                }
+                string name = FunctionMap.AddFuncData(mid);
                 temp.Add(name, mid);
 
                 //求出方法和对应的委托函数变量的对应关系，注入到mono代码需要
@@ -445,10 +495,6 @@ namespace HotFixInjector
             sw.Flush();
             sw.Close();
         }
-
-
-
-
 
         private static string GetParamterNickName(ParameterInfo info)
         {
