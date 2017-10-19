@@ -20,24 +20,148 @@ namespace HotFixInjector
 {
     class Program
     {
+        private static TypeReference m_InjectRef = null;
         static void Main(string[] args)
         {
-            string genpath = Path.GetFullPath("../../../Assets/inject_gen");
+            bool testinject = true;
 
-            //这里貌似只能使用工程中引用的程序集，不能使用外部的dll，原因不明白，知道的可以帮忙解释下
-            Assembly dllcode = Assembly.Load("Assembly-CSharp");
-            if(dllcode == null)
+            if (testinject || (args != null && args[0] == "inject"))
             {
-                Console.WriteLine("dll not find");
-                return;
+                InjectAssembly(Path.GetFullPath("../../../Library/ScriptAssemblies/Assembly-CSharp.dll"));
+            }
+            else
+            {
+                string genpath = Path.GetFullPath("../../../Assets/inject_gen");
+
+                //这里貌似只能使用工程中引用的程序集，不能使用外部的dll，原因不明白，知道的可以帮忙解释下
+                Assembly dllcode = Assembly.Load("Assembly-CSharp");
+                if (dllcode == null)
+                {
+                    Console.WriteLine("dll not find");
+                    return;
+                }
+
+                List<MethodInfoData> needfixMethods = new List<MethodInfoData>();
+                CollectMethods(dllcode, needfixMethods);
+                //先生成委托gen
+                GenDelegateCode(genpath, needfixMethods);
+                //生成函数变量
+                GenFunctionVar(genpath, needfixMethods);
+            }
+        }
+        public static void InjectAssembly(string assembly_path)
+        {
+            var readerParameters = new ReaderParameters { ReadSymbols = false };
+            AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(assembly_path, readerParameters);
+
+            m_InjectRef = assembly.MainModule.ImportReference(typeof(InjectAttribute));
+
+            //if (assembly.Modules.Any(module => module.Types.Any(x => x.Namespace == "__CSHotFix" && x.Name == "INJECTED")))
+            //{
+            //    Console.WriteLine("This Assembly is already injected!");
+            //    return;
+            //}
+
+            foreach (var module in assembly.Modules)
+            {
+                foreach (var typ in module.Types)
+                {
+                    if (IsNeedInjectType(typ))
+                    {
+                        foreach (var method in typ.Methods)
+                        {
+                            if (IsNeedInjectMethod(method))
+                            {
+                                InjectMethod(typ, method);
+                            }
+                        }
+                    }
+                }
             }
 
-            List<MethodInfoData> needfixMethods = new List<MethodInfoData>();
-            CollectMethods(dllcode, needfixMethods);
-            //先生成委托gen
-            GenDelegateCode( genpath, needfixMethods);
-            //生成函数变量
-            GenFunctionVar(genpath, needfixMethods);
+
+            //var objType = assembly.MainModule.ImportReference(typeof(object));
+            //assembly.MainModule.Types.Add(new TypeDefinition("__CSHotFix", "INJECTED", Mono.Cecil.TypeAttributes.Class, objType));
+
+            //var writerParameters = new WriterParameters { WriteSymbols = true };
+            //assembly.Write(assembly_path, writerParameters);
+
+            //Console.WriteLine("Inject Success!!!");
+
+            //if (assembly.MainModule.SymbolReader != null)
+            //{
+            //    assembly.MainModule.SymbolReader.Dispose();
+            //}
+        }
+
+        public static void InjectMethod(TypeDefinition type, MethodDefinition method)
+        {
+            //if (type.Name.Contains("<") || type.IsInterface || type.Methods.Count == 0) // skip anonymous type and interface
+            //    return;
+            //if (method.Name == ".cctor")
+            //    return;
+            //TypeDefinition delegateTypeRef = type.Module.Types.Single(t => t.FullName == "HotFixBridge");
+
+            //if (delegateTypeRef != null)
+            //{
+            //    delegateTypeRef = type.Module.Types.Single(x => x.Name == "HotFixBridge");
+            //    string delegateFieldName = GenerateMethodName(method);
+            //    FieldDefinition item = new FieldDefinition(delegateFieldName, FieldAttributes.Static | FieldAttributes.Public, delegateTypeRef);
+            //    FieldReference parameter = item.FieldType.Resolve().Fields.Single(field => field.Name == "Parameters");
+
+            //    type.Fields.Add(item);
+
+            //    var invokeDeclare = type.Module.ImportReference(delegateTypeRef.Methods.Single(x => x.Name == "Invoke"));
+            //    if (!method.HasBody)
+            //        return;
+            //    var insertPoint = method.Body.Instructions[0];
+            //    var ilGenerator = method.Body.GetILProcessor();
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Brfalse, insertPoint));
+
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldfld, parameter));
+            //    ilGenerator.InsertBefore(insertPoint, CreateLoadIntConst(ilGenerator, 0));
+            //    if (method.IsStatic)
+            //    {
+            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldnull));
+            //    }
+            //    else
+            //    {
+            //        ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, 0));
+            //    }
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Stelem_Ref));
+
+            //    for (int i = 0; i < method.Parameters.Count; i++)
+            //    {
+            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
+            //        //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
+            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldfld, parameter));
+
+            //        int index = (i + (method.IsStatic ? 0 : 1));
+            //        ilGenerator.InsertBefore(insertPoint, CreateLoadIntConst(ilGenerator, i + 1));
+            //        ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, index));
+
+            //        if (method.Parameters[i].ParameterType.IsValueType)
+            //        {
+            //            ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Box, method.Parameters[i].ParameterType));
+            //        }
+
+            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Stelem_Ref));
+            //    }
+
+            //    //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Call, invokeDeclare));
+
+            //    if (method.ReturnType.Name == "Void")
+            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Pop));
+            //    else if (method.ReturnType.IsValueType)
+            //    {
+            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Unbox_Any, method.ReturnType));
+            //    }
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ret));
+            //}
         }
 
 
@@ -410,6 +534,27 @@ namespace HotFixInjector
                 return false;
             }
         }
+
+        private static bool IsNeedInjectType(TypeDefinition type)
+        {
+            if (type == null)
+            {
+                return false;
+            }
+            if (type.Namespace == null || type.Name.Contains("<") || type.IsInterface || type.Methods.Count == 0) // skip anonymous type and interface
+            {
+                return false;
+            }
+            else if (!type.Namespace.Contains("LCL.Logic"))
+            {
+                //这里假设只有Mono的逻辑代码会出错
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
         private static bool IsNeedInjectType(Type type)
         {
             if(type == null)
@@ -429,6 +574,25 @@ namespace HotFixInjector
             {
                 return true;
             }
+        }
+
+        private static bool IsNeedInjectMethod(MethodDefinition method)
+        {
+            if (method == null)
+            {
+                return false;
+            }
+            var attrs = method.CustomAttributes;//.FirstOrDefault(ca => ca.AttributeType == m_InjectRef);
+            foreach(var attr in attrs)
+            {
+                if( attr.AttributeType.FullName == m_InjectRef.FullName)
+                {
+                    InjectFlag hotfixType = (InjectFlag)attr.ConstructorArguments[0].Value;
+                    return hotfixType == InjectFlag.Inject;
+                } 
+            }
+            return true;
+            
         }
         private static bool IsNeedInjectMethod(MethodBase method)
         {
