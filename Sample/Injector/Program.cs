@@ -22,20 +22,13 @@ namespace HotFixInjector
     {
         static void Main(string[] args)
         {
-            if(args == null)
-            {
-                Console.WriteLine("args error");
-                return;
-            }
-            string dll = Path.GetFullPath(args[0]);
-            string genpath = Path.GetFullPath(args[1]);
-            string genbat = Path.GetFullPath(args[2]);
+            string genpath = Path.GetFullPath("../../../Assets/inject_gen");
 
             //这里貌似只能使用工程中引用的程序集，不能使用外部的dll，原因不明白，知道的可以帮忙解释下
             Assembly dllcode = Assembly.Load("Assembly-CSharp");
             if(dllcode == null)
             {
-                Console.WriteLine("dll not find path:"+dll);
+                Console.WriteLine("dll not find");
                 return;
             }
 
@@ -45,9 +38,6 @@ namespace HotFixInjector
             GenDelegateCode( genpath, needfixMethods);
             //生成函数变量
             GenFunctionVar(genpath, needfixMethods);
-
-            //编译gen
-            MakeGenCode(genbat);
         }
 
 
@@ -360,12 +350,22 @@ namespace HotFixInjector
                         {
                             param_type_string = shortname;
                         }
+                        else
+                        {
+                            //支持自定义类
+                            param_type_string = shortname;
+                        }
                     }
                     else
                     {
                          //不是系统的基础类型，查看是否是我们关心的基础类型
                         if(IsOtherPrimitive(shortname))
                         {
+                            param_type_string = shortname;
+                        }
+                        else
+                        {
+                            //支持自定义类
                             param_type_string = shortname;
                         }   
                     }
@@ -454,15 +454,6 @@ namespace HotFixInjector
             {
                 return true;
             }
-        }
-
-        private static void MakeGenCode(string bat)
-        {
-            System.Diagnostics.Process process = new System.Diagnostics.Process();
-            process.StartInfo.FileName = bat;
-            process.StartInfo.UseShellExecute = true;
-            process.Start();
-            process.WaitForExit();
         }
     }
 }
