@@ -12,59 +12,15 @@ namespace ILRuntimeGenTool
     {
         static void Main(string[] args)
         {
-            string injectGen =Path.GetFullPath( "../../../Assets/Plugins/InjectGen.dll");
             string hotdll = Path.GetFullPath("../../../Assets/Out/HotFixDll.dll.bytes");
 
             string bindroot = Path.GetFullPath("../../../ILRuntimeGen");
             string bindgen = Path.Combine(bindroot, "src");
 
-            string[] oldFiles = System.IO.Directory.GetFiles(bindgen, "*.cs");
-            foreach (var i in oldFiles)
-            {
-                System.IO.File.Delete(i);
-            }
-
-            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.ClearClassNames();
-
-            ILRuntime.Runtime.Enviorment.AppDomain domain_injectgen = new ILRuntime.Runtime.Enviorment.AppDomain();
-            using (System.IO.FileStream fs = new System.IO.FileStream(injectGen, System.IO.FileMode.Open, System.IO.FileAccess.Read))
-            {
-                domain_injectgen.LoadAssembly(fs);
-            }
-            InitILRuntime_InjectGen(domain_injectgen);
-            Assembly injectdll = Assembly.Load("InjectGen");
-            List<Type> types = injectdll.GetTypes().ToList();
-            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.GenerateBindingCode(types, bindgen);
-
-            ILRuntime.Runtime.Enviorment.AppDomain domain_hotdll = new ILRuntime.Runtime.Enviorment.AppDomain();
-            using (System.IO.FileStream fs = new System.IO.FileStream(hotdll, System.IO.FileMode.Open, System.IO.FileAccess.Read))
-            {
-                domain_hotdll.LoadAssembly(fs);
-            }
-
-            InitILRuntime_HotDll(domain_hotdll);
-            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.GenerateBindingCode(domain_hotdll, bindgen);
-            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.GenerateCLRBindingsCode(bindgen);
-
-            ILRuntime.Runtime.CLRBinding.BindingCodeGenerator.ClearClassNames();
+            ILRuntimeCLRBinding.GenerateCLRBindingByAnalysis(hotdll, bindgen);
 
             AddVSProject(bindroot);
 
-        }
-
-        static void InitILRuntime_InjectGen(ILRuntime.Runtime.Enviorment.AppDomain domain)
-        {
-
-        }
-
-
-        static void InitILRuntime_HotDll(ILRuntime.Runtime.Enviorment.AppDomain domain)
-        {
-            //这里需要注册所有热更DLL中用到的跨域继承Adapter，否则无法正确抓取引用
-            //domain.RegisterCrossBindingAdaptor(new MonoBehaviourAdapter());
-            //domain.RegisterCrossBindingAdaptor(new CoroutineAdapter());
-            domain.RegisterCrossBindingAdaptor(new IGameHotFixInterfaceAdapter());
-            //domain.RegisterCrossBindingAdaptor(new ISerializePacketAdapter());
         }
 
 
