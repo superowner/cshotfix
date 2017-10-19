@@ -12,7 +12,7 @@ namespace HotFixInjector
     public class FuncData
     {
         public string returnType;
-        public List<string> paramsType;
+        public List<string> paramsType = new List<string>();
         public string funcName;
     }
     /// <summary>
@@ -21,11 +21,10 @@ namespace HotFixInjector
     public class FunctionMap
     {
         public static List<FuncData> m_FunctionMap = new List<FuncData>();
-
+        private static string m_fileName  =Path.Combine( Path.GetDirectoryName( System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName) , "FunctionMap.txt");
         public static void WriteData()
         {
-            string path = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName + ".txt";
-            StreamWriter sw = new StreamWriter(path);
+            StreamWriter sw = new StreamWriter(m_fileName);
             sw.WriteLine(m_FunctionMap.Count);
             foreach (var f in m_FunctionMap)
             {
@@ -42,8 +41,7 @@ namespace HotFixInjector
         }
         public static void ReadData()
         {
-            string path = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName + ".txt";
-            StreamReader sr = new StreamReader(path);
+            StreamReader sr = new StreamReader(m_fileName);
             int count = int.Parse(sr.ReadLine());
             for(int i=0;i<count;++i)
             {
@@ -55,6 +53,7 @@ namespace HotFixInjector
                     data.paramsType.Add(sr.ReadLine());
                 }
                 data.funcName = sr.ReadLine();
+                m_FunctionMap.Add(data);
             }
             sr.Close();
         }

@@ -52,7 +52,7 @@ namespace HotFixInjector
 
         static void Main(string[] args)
         {
-            bool testinject = false;
+            bool testinject = true;
 
             if (testinject || (args != null && args[0] == "inject"))
             {
@@ -428,12 +428,10 @@ namespace HotFixInjector
              "       {");
             int count = list.Count;
             //检测是否有相同名称的，有的话就用序号表示
-            Dictionary<string, MethodInfoData> temp = new Dictionary<string, MethodInfoData>();
             for (int i = 0; i < count; ++i)
             {
                 MethodInfoData mid = list[i];
                 string name = FunctionMap.AddFuncData(mid);
-                temp.Add(name, mid);
 
                 //求出方法和对应的委托函数变量的对应关系，注入到mono代码需要
                 mid.functionname = name;
