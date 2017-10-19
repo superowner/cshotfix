@@ -52,10 +52,11 @@ namespace HotFixInjector
 
         static void Main(string[] args)
         {
-            bool testinject = true;
+            bool testinject = false;
 
             if (testinject || (args != null && args[0] == "inject"))
             {
+                FunctionMap.ReadData();
                 InjectAssembly(Path.GetFullPath("../../../Library/ScriptAssemblies/Assembly-CSharp.dll"));
             }
             else
@@ -76,6 +77,8 @@ namespace HotFixInjector
                 GenDelegateCode(genpath, needfixMethods);
                 //生成函数变量
                 GenFunctionVar(genpath, needfixMethods);
+
+                FunctionMap.WriteData();
             }
         }
         public static void InjectAssembly(string assembly_path)
