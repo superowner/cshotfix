@@ -81,7 +81,7 @@ namespace HotFixInjector
         }
         public static FieldDefinition GetFunctionField(TypeDefinition functionDef, MethodDefinition method)
         {
-            string returnType = method.ReturnType.DeclaringType.Name;
+            string returnType = method.IsConstructor?"" : method.ReturnType.DeclaringType.Name;
             List<string> paramsType = new List<string>();
             var parameters = method.Parameters;
             foreach(var p in parameters)

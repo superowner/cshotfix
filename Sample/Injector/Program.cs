@@ -144,16 +144,15 @@ namespace HotFixInjector
                 return;
             if (method.Name == ".cctor")
                 return;
+            if(!method.HasBody)
+            {
+                return;
+            }
+            var item = FunctionMap.GetFunctionField(m_FuncDef, method);
 
-            var funcVar = FunctionMap.GetFunctionField(m_FuncDef, method);
-            //FieldDefinition item = new FieldDefinition(delegateFieldName, FieldAttributes.Static | FieldAttributes.Public, delegateTypeRef);
-            //FieldReference parameter = item.FieldType.Resolve().Fields.Single(field => field.Name == "Parameters");
 
 
-            //var invokeDeclare = type.Module.ImportReference(delegateTypeRef.Methods.Single(x => x.Name == "Invoke"));
-            //if (!method.HasBody)
-            //    return;
-            ////记住方法原来的开始插入点
+            //////记住方法原来的开始插入点
             //var insertPoint = method.Body.Instructions[0];
             //var ilGenerator = method.Body.GetILProcessor();
 
@@ -161,6 +160,7 @@ namespace HotFixInjector
             //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
             ////如果为false还原插入点
             //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Brfalse, insertPoint));
+
 
             //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
             //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
