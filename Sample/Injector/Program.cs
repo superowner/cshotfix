@@ -50,6 +50,7 @@ namespace HotFixInjector
         private static TypeReference m_InjectRef = null;
         private static TypeDefinition m_FuncDef = null;
 
+
         static void Main(string[] args)
         {
             bool testinject = true;
@@ -81,11 +82,12 @@ namespace HotFixInjector
                 FunctionMap.WriteData();
             }
         }
+        private static AssemblyDefinition m_Assembly = null;
         public static void InjectAssembly(string assembly_path)
         {
             var readerParameters = new ReaderParameters { ReadSymbols = false };
             AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(assembly_path, readerParameters);
-
+            m_Assembly = assembly;
             m_InjectRef = assembly.MainModule.ImportReference(typeof(InjectAttribute));
             //if (assembly.Modules.Any(module => module.Types.Any(x => x.Namespace == "__CSHotFix" && x.Name == "INJECTED")))
             //{
@@ -127,15 +129,15 @@ namespace HotFixInjector
             //var objType = assembly.MainModule.ImportReference(typeof(object));
             //assembly.MainModule.Types.Add(new TypeDefinition("__CSHotFix", "INJECTED", Mono.Cecil.TypeAttributes.Class, objType));
 
-            //var writerParameters = new WriterParameters { WriteSymbols = true };
-            //assembly.Write(assembly_path, writerParameters);
+            var writerParameters = new WriterParameters { WriteSymbols = true };
+            assembly.Write(assembly_path, writerParameters);
 
-            //Console.WriteLine("Inject Success!!!");
+            Console.WriteLine("Inject Success!!!");
 
-            //if (assembly.MainModule.SymbolReader != null)
-            //{
-            //    assembly.MainModule.SymbolReader.Dispose();
-            //}
+            if (assembly.MainModule.SymbolReader != null)
+            {
+                assembly.MainModule.SymbolReader.Dispose();
+            }
         }
 
         public static void InjectMethod(TypeDefinition type, MethodDefinition method)
@@ -148,21 +150,21 @@ namespace HotFixInjector
             {
                 return;
             }
-            var item = FunctionMap.GetFunctionField(m_FuncDef, method);
+            var fielditem = FunctionMap.GetFunctionField(m_FuncDef, method);
+            var funcitem = FunctionMap.GetFunctionMethod(m_FuncDef, method);
 
 
+            ////记住方法原来的开始插入点
+            var insertPoint = method.Body.Instructions[0];
+            var ilGenerator = method.Body.GetILProcessor();
 
-            //////记住方法原来的开始插入点
-            //var insertPoint = method.Body.Instructions[0];
-            //var ilGenerator = method.Body.GetILProcessor();
-
-            ////插入注入代码
-            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
-            ////如果为false还原插入点
-            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Brfalse, insertPoint));
+            //插入注入代码
+            ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, fielditem));
+            //如果为false还原插入点
+            ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Brfalse, insertPoint));
 
 
-            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, fielditem));
             //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
             //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldfld, parameter));
             //ilGenerator.InsertBefore(insertPoint, CreateLoadIntConst(ilGenerator, 0));
@@ -438,8 +440,39 @@ namespace HotFixInjector
 
                 //输出一行
                 //public static DelegateImp0 __hotfix__GameMono__GameLoop__HelloWorld0;
-                string linestr = "          public static " + mid.delegatename + " " + name + ";";
+                string linestr = "          public static " + mid.delegatename + " " + name+"_delegate" + ";";
                 sw.WriteLine(linestr);
+                ParameterInfo _hr = null;
+                if(mid.methodinfo is MethodInfo)
+                {
+                    _hr = (mid.methodinfo as MethodInfo).ReturnParameter;
+                }
+                string returnstr = _hr == null ? " void " : GetParameterTypeName(_hr);
+                ParameterInfo[] _params = mid.methodinfo.GetParameters();
+                string params_string = "object _this";
+                string params_string_no_type = "_this";
+                
+                if (_params != null && _params.Length > 0)
+                {
+                    int pcount = _params.Length;
+                    for (int pi = 0; pi < pcount; ++pi)
+                    {
+                        ParameterInfo info = _params[pi];
+                        string ref_str = info.IsOut ? "" : (info.ParameterType.IsByRef ? " ref " : "");
+                        string out_str = info.IsOut ? " out " : "";
+                        string param_type_string = GetParameterTypeName(info);
+                        string param_name = " _param" + pi.ToString() + "_" + GetParamterNickName(info);
+                        params_string += "," + ref_str + out_str + param_type_string + param_name;
+                        params_string_no_type += ", " + ref_str + out_str + param_name;
+                    }
+                }
+
+               
+                string funcstr = "          public static " + returnstr+ " "+ mid.functionname + "("+ params_string + ")" + Environment.NewLine +
+                    "         {" + Environment.NewLine +
+                    "               "+ ((_hr == null|| _hr.ParameterType.Name.ToLower() =="void")?" ":"return " )+  mid.functionname + "_delegate" + "("+params_string_no_type+");"+Environment.NewLine+
+                    "         }";
+                sw.WriteLine(funcstr);
             }
             sw.WriteLine("       }" + Environment.NewLine +
              "}");

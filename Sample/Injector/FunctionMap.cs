@@ -81,7 +81,36 @@ namespace HotFixInjector
         }
         public static FieldDefinition GetFunctionField(TypeDefinition functionDef, MethodDefinition method)
         {
-            string returnType = method.IsConstructor?"" : method.ReturnType.DeclaringType.Name;
+            FuncData returnData = GetFuncData(functionDef, method);
+            string name = returnData.funcName+"_delegate";
+            foreach(var f in functionDef.Fields)
+            {
+                if( f.Name == name )
+                {
+                    return f;
+                }
+            }
+            return null;
+        }
+
+        private static FuncData GetFuncData(TypeDefinition functionDef, MethodDefinition method)
+        {
+            string returnType = "void";
+            if (method.IsConstructor)
+            {
+                returnType = "";
+            }
+            else
+            {
+                if(method.ReturnType.Name.ToLower() == "void")
+                {
+                    returnType = "void";
+                }
+                else
+                {
+                    returnType = method.ReturnType.Name;
+                }
+            }
             List<string> paramsType = new List<string>();
             var parameters = method.Parameters;
             foreach(var p in parameters)
@@ -91,7 +120,7 @@ namespace HotFixInjector
 
             FuncData returnData = m_FunctionMap.Find((FuncData data) =>
             {
-                if(data.returnType != returnType)
+                if(data.returnType.ToLower() != returnType.ToLower())
                 {
                     return false;
                 }
@@ -104,7 +133,7 @@ namespace HotFixInjector
                     int count = paramsType.Count;
                     for(int i =0;i<count;++i)
                     {
-                        if(paramsType[i] != data.paramsType[i])
+                        if(paramsType[i].ToLower() != data.paramsType[i].ToLower())
                         {
                             return false;
                         }
@@ -112,11 +141,16 @@ namespace HotFixInjector
                 }
                 return true;
             });
+            return returnData;
+        }
 
+        public static MethodDefinition GetFunctionMethod(TypeDefinition functionDef, MethodDefinition method)
+        {
+            FuncData returnData = GetFuncData(functionDef, method);
             string name = returnData.funcName;
-            foreach(var f in functionDef.Fields)
+            foreach (var f in functionDef.Methods)
             {
-                if( f.Name == name )
+                if (f.Name == name)
                 {
                     return f;
                 }
