@@ -9,11 +9,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using LCL;
 using Mono.Cecil.Cil;
 using Mono.Cecil;
+using System.Reflection;
 
 namespace HotFixInjector
 {
@@ -53,7 +53,7 @@ namespace HotFixInjector
 
         static void Main(string[] args)
         {
-            bool testinject = true;
+            bool testinject = false;
 
             if (testinject || (args != null && args[0] == "inject"))
             {
@@ -204,48 +204,48 @@ namespace HotFixInjector
             ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Brfalse, insertPoint));
 
 
-            ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, fielditem));
-            ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
-            ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldfld, parameter));
-            ilGenerator.InsertBefore(insertPoint, CreateLoadIntConst(ilGenerator, 0));
-            if (method.IsStatic)
-            {
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldnull));
-            }
-            else
-            {
-                ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, 0));
-            }
-            ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Stelem_Ref));
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, fielditem));
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldfld, parameter));
+            //ilGenerator.InsertBefore(insertPoint, CreateLoadIntConst(ilGenerator, 0));
+            //if (method.IsStatic)
+            //{
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldnull));
+            //}
+            //else
+            //{
+            //    ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, 0));
+            //}
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Stelem_Ref));
 
-            for (int i = 0; i < method.Parameters.Count; i++)
-            {
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
-                //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldfld, parameter));
+            //for (int i = 0; i < method.Parameters.Count; i++)
+            //{
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Dup));
+            //    //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldfld, parameter));
 
-                int index = (i + (method.IsStatic ? 0 : 1));
-                ilGenerator.InsertBefore(insertPoint, CreateLoadIntConst(ilGenerator, i + 1));
-                ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, index));
+            //    int index = (i + (method.IsStatic ? 0 : 1));
+            //    ilGenerator.InsertBefore(insertPoint, CreateLoadIntConst(ilGenerator, i + 1));
+            //    ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, index));
 
-                if (method.Parameters[i].ParameterType.IsValueType)
-                {
-                    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Box, method.Parameters[i].ParameterType));
-                }
+            //    if (method.Parameters[i].ParameterType.IsValueType)
+            //    {
+            //        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Box, method.Parameters[i].ParameterType));
+            //    }
 
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Stelem_Ref));
-            }
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Stelem_Ref));
+            //}
 
-            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
-            ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Call, invokeDeclare));
+            ////ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Call, invokeDeclare));
 
-            if (method.ReturnType.Name == "Void")
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Pop));
-            else if (method.ReturnType.IsValueType)
-            {
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Unbox_Any, method.ReturnType));
-            }
-            ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ret));
+            //if (method.ReturnType.Name == "Void")
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Pop));
+            //else if (method.ReturnType.IsValueType)
+            //{
+            //    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Unbox_Any, method.ReturnType));
+            //}
+            //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ret));
 
         }
 
