@@ -20,7 +20,7 @@ namespace LCL
             }
             public void TestInject2(int c)
             {
-                if (HotFix.HotFixFunction.hotfix_func2 != null)
+                if (HotFix.HotFixFunction.hotfix_func2_delegate != null)
                 {
                     HotFix.HotFixFunction.hotfix_func2(this, c);
                     return;
@@ -30,7 +30,7 @@ namespace LCL
             }
             public int TestInject(float a, ref Vector3 v3, string str, ref int refint, ref ClassData data , out string outstr)
             {
-                if(HotFix.HotFixFunction.hotfix_func3 != null)
+                if(HotFix.HotFixFunction.hotfix_func3_delegate != null)
                 {
                     return HotFix.HotFixFunction.hotfix_func3(this, a, ref v3, str, ref refint, ref data, out outstr);
                 }
