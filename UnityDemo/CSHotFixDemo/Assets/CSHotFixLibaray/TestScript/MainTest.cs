@@ -29,4 +29,9 @@ public class MainTest : MonoBehaviour {
         c = 0;
         return new float[] { 1 };
     }
+
+    public DataClass test4(DataClass data)
+    {
+        return data;
+    }
 }
