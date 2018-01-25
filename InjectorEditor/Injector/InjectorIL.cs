@@ -97,23 +97,21 @@ public class InjectorIL
             ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
 
 
+            if (method.IsStatic)
+            {
+                //压入一个null
+                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldnull));
+            }
+            else
+            {
+                //压入this
+                ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, 0));
+            }
+
             for (int i = 0; i < method.Parameters.Count; i++)
             {
                 //压入参数
-                if (i == 0)
-                {
-                    if (method.IsStatic)
-                    {
-                        //压入一个null
-                        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldnull));
-
-                    }
-                    ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, i));
-                }
-                else
-                {
-                    ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, i));
-                }
+                ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator,method.IsStatic?i:i+1));
             }
             
 

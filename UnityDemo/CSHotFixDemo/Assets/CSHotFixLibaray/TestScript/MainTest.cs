@@ -13,14 +13,20 @@ public class MainTest : MonoBehaviour {
     {
         Debug.Log("Unit:void Test0()");
     }
+    static FunctionDelegate.method_delegate0 aaa;
     void Test1(int a)
     {
+        aaa(this);
         Debug.Log("Unit:void Test1(int a)");
     }
-    static FunctionDelegate.method_delegate1 aaa;
     static void Test2(int a)
     {
-        aaa(null,a);
         Debug.Log("Unit:static void Test2(int a)");
+    }
+
+    public static float[] test3(long a, ref int b, out float c, byte[] data, float d=0)
+    {
+        c = 0;
+        return new float[] { 1 };
     }
 }
