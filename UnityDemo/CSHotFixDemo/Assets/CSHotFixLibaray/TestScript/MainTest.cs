@@ -17,8 +17,10 @@ public class MainTest : MonoBehaviour {
     {
         Debug.Log("Unit:void Test1(int a)");
     }
+    static FunctionDelegate.method_delegate1 aaa;
     static void Test2(int a)
     {
+        aaa(null,a);
         Debug.Log("Unit:static void Test2(int a)");
     }
 }

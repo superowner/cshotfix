@@ -21,6 +21,7 @@ public class DelegateWriter
         foreach (var info in lines)
         {
             string funcline = "     public delegate " + info.m_ReturnString + " ";
+
             funcline += "method_delegate" + funcIndex++ + "(";
             int paramIndex = 0;
             foreach (var param in info.m_Params)

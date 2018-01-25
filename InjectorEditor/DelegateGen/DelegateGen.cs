@@ -51,6 +51,8 @@ public class DelegateGen
                 var paramters = methodinfo.GetParameters();
                 if (paramters != null)
                 {
+                    //添加this的object，每个委托都需要默认有一个
+                    info.m_Params.Add(new ParamData() { m_ParamString= "System.Object", m_RefOut = RefOutArrayEnum.None });
                     foreach (var pi in paramters)
                     {
                         ParamData paramdata = new ParamData();

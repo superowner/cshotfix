@@ -96,13 +96,24 @@ public class InjectorIL
             //处理if大括号内部逻辑
             ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
 
-            //一旦有ref out的话，下标就要从1开始
-            bool isStatic = method.IsStatic;
+
             for (int i = 0; i < method.Parameters.Count; i++)
             {
                 //压入参数
-                int paramIdx = !isStatic ? (i + 1) : i;
-                ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, paramIdx));
+                if (i == 0)
+                {
+                    if (method.IsStatic)
+                    {
+                        //压入一个null
+                        ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldnull));
+
+                    }
+                    ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, i));
+                }
+                else
+                {
+                    ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, i));
+                }
             }
             
 
@@ -209,17 +220,17 @@ public class InjectorIL
 
             var mdf_params = mdf.Parameters.ToList();
             var mdf_params2 = method.Parameters.ToList();
-            if (mdf_params.Count != mdf_params2.Count)
+            if (mdf_params.Count != mdf_params2.Count+1)
             {
                 return false;
             }
-            for(int i=0;i<mdf_params.Count;++i)
+            for(int i=0;i<mdf_params2.Count;++i)
             {
-                if(GetParamTypeEnum(mdf_params[i])!= GetParamTypeEnum(mdf_params2[i]))
+                if(GetParamTypeEnum(mdf_params[i+1])!= GetParamTypeEnum(mdf_params2[i]))
                 {
                     return false;
                 }
-                if(mdf_params[i].ParameterType.FullName != mdf_params2[i].ParameterType.FullName)
+                if(mdf_params[i+1].ParameterType.FullName != mdf_params2[i].ParameterType.FullName)
                 {
                     return false;
                 }
