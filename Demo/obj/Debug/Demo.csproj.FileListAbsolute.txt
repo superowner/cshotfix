@@ -1,0 +1,4 @@
+C:\GiteeSVN\ProtectGold\Research\MSILInject\Demo\bin\Debug\Demo.exe
+C:\GiteeSVN\ProtectGold\Research\MSILInject\Demo\bin\Debug\Demo.pdb
+C:\GiteeSVN\ProtectGold\Research\MSILInject\Demo\obj\Debug\Demo.exe
+C:\GiteeSVN\ProtectGold\Research\MSILInject\Demo\obj\Debug\Demo.pdb
