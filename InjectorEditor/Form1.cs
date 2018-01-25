@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -49,6 +50,38 @@ namespace InjectorEditor
             catch(Exception exp)
             {
                 m_log.Text = exp.Message + exp.StackTrace;
+            }
+        }
+
+        private void OnFormLoad(object sender, EventArgs e)
+        {
+            LoadCfg();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            LoadCfg();
+        }
+        private void LoadCfg()
+        {
+            try
+            {
+                FileStream file = new FileStream("ini.txt", FileMode.Open);
+                StreamReader reader = new StreamReader(file);
+                string dllPath = reader.ReadLine();
+                dllPath = dllPath.Split('=')[1];
+                string delegatePath = reader.ReadLine();
+                delegatePath = delegatePath.Split('=')[1];
+                m_DelegatePath.Text = delegatePath;
+                m_DllPath.Text = dllPath;
+                reader.Close();
+                reader = null;
+                file.Close();
+                file = null;
+            }
+            catch(Exception e)
+            {
+                m_log.Text = e.Message;
             }
         }
     }

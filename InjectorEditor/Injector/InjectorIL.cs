@@ -10,7 +10,7 @@ public class InjectorIL
     private List<TypeDefinition> m_DelegateFunctions = null;
     public void InjectAssembly(string dllPath)
     {
-        var readerParameters = new ReaderParameters { ReadSymbols = true };
+        var readerParameters = new ReaderParameters { ReadSymbols = false };
         AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(dllPath, readerParameters);
 
         foreach (var module in assembly.Modules)
@@ -30,7 +30,7 @@ public class InjectorIL
 
         foreach (var module in assembly.Modules)
         {
-            foreach (var typ in module.Types.Where(InjectorConfig.Filter))
+            foreach (var typ in module.Types)
             {
                 foreach (var method in typ.Methods)
                 {
@@ -48,55 +48,6 @@ public class InjectorIL
             assembly.MainModule.SymbolReader.Dispose();
         }
     }
-
-
-
- //   IL_0000: nop
- //   IL_0001: ldarg.0
-//    IL_0002: ldfld class FunctionDelegate/method_delegate1 Demo.GameMain::TestFunc_Delegate
-
- //   IL_0007: ldnull
- //   IL_0008: cgt.un
- //   IL_000a: stloc.0
-
- //   IL_000b: ldloc.0
-
- //   IL_000c: brfalse.s IL_001f
-
-
- //   IL_000e: nop
- //   IL_000f: ldarg.0
-
- //   IL_0010: ldfld class FunctionDelegate/method_delegate1 Demo.GameMain::TestFunc_Delegate
-
- //   IL_0015: ldarg.1
-
- //   IL_0016: ldarg.2
-
- //   IL_0017: callvirt instance float32 FunctionDelegate/method_delegate1::Invoke(int32, int64)
-
- //   IL_001c: stloc.1
-	//IL_001d: br.s IL_0027
-
-
- //   IL_001f: ldc.r4 -1
-	//IL_0024: stloc.1
-	//IL_0025: br.s IL_0027
-
-
- //   IL_0027: ldloc.1
-	//IL_0028: ret
-
-
-
-
-
-
-
-
-
-
-
 
 
     private void InjectMethod(TypeDefinition type, MethodDefinition method)
@@ -146,11 +97,11 @@ public class InjectorIL
             ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
 
             //一旦有ref out的话，下标就要从1开始
-            bool hasOutRefArrayParameter = HasOutRefArrayParameter(method);
+            bool isStatic = method.IsStatic;
             for (int i = 0; i < method.Parameters.Count; i++)
             {
                 //压入参数
-                int paramIdx = hasOutRefArrayParameter ? (i + 1) : i;
+                int paramIdx = !isStatic ? (i + 1) : i;
                 ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, paramIdx));
             }
             

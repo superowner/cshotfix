@@ -17,6 +17,7 @@ public class DelegateGen
         m_DelegateWriter = new DelegateWriter();
 
         m_DelegateWriter.WriteFunctionDelegate(delegatePath, lines);
+
     }
     private List<LMethodInfo> LoadAssembly(string assemblyName)
     {
@@ -35,14 +36,10 @@ public class DelegateGen
             {
                 continue;
             }
-            var methodInfos = type.GetMethods();
+            var methodInfos = type.GetMethods( BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
             foreach (var methodinfo in methodInfos)
             {
                 //只处理本类的方法，派生方法不要
-                if (methodinfo.DeclaringType.FullName != type.FullName)
-                {
-                    continue;
-                }
                 LMethodInfo info = new LMethodInfo();
                 var returnparamter = methodinfo.ReturnParameter;
                 info.m_ReturnString = returnparamter.ParameterType.ToString();
@@ -65,18 +62,50 @@ public class DelegateGen
                         {
                             paramdata.m_RefOut = RefOutArrayEnum.Ref;
                         }
+                        else if(pi.ParameterType.IsArray)
+                        {
+                            paramdata.m_RefOut = RefOutArrayEnum.Array;
+                        }
 
 
                         paramdata.m_ParamString = pi.ParameterType.ToString().Replace("&", "");
                         info.m_Params.Add(paramdata);
                     }
                 }
-                funcLines.Add(info);
-
+                if (!funcLines.Exists((oldInfo) => { return IsEqualLMethodInfo( oldInfo, info);}))
+                {
+                    funcLines.Add(info);
+                }
             }
         }
 
         return funcLines;
+    }
+
+    private bool IsEqualLMethodInfo(LMethodInfo info0, LMethodInfo info1)
+    {
+        if(info0.m_ReturnString != info1.m_ReturnString)
+        {
+            return false;
+        }
+        if(info0.m_Params.Count != info1.m_Params.Count)
+        {
+            return false;
+        }
+        for(int i=0;i<info0.m_Params.Count;++i)
+        {
+            var paramData0 = info0.m_Params[i];
+            var paramData1 = info1.m_Params[i];
+            if(paramData0.m_ParamString!= paramData1.m_ParamString)
+            {
+                return false;
+            }
+            if(paramData0.m_RefOut!= paramData1.m_RefOut)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 }
 

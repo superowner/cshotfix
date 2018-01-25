@@ -64,8 +64,6 @@
     <Compile Include="DelegateGen\DelegateWriter.cs" />
     <Compile Include="DelegateGen\DelegateGen.cs" />
     <Compile Include="DelegateGen\LMethodInfo.cs" />
-    <Compile Include="Injector\Injector.cs" />
-    <Compile Include="Injector\InjectorConfig.cs" />
     <Compile Include="Injector\InjectorIL.cs" />
     <Compile Include="Injector\InjectorMain.cs" />
     <Compile Include="Program.cs" />

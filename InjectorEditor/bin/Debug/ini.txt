@@ -1,0 +1,2 @@
+dllpath=C:/GiteeSVN/ProtectGold/Research/MSILInject/UnityDemo/CSHotFixDemo/Library/ScriptAssemblies/Assembly-CSharp.dll
+delegatepath=C:/GiteeSVN/ProtectGold/Research/MSILInject/UnityDemo/CSHotFixDemo/Assets/CSHotFixLibaray/DelegateGen
