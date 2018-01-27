@@ -78,9 +78,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\CSHotFixLibaray\DelegateGen\LCLFieldDelegateName.cs" />
     <Compile Include="Assets\CSHotFixLibaray\DelegateGen\LCLFunctionDelegate.cs" />
     <Compile Include="Assets\CSHotFixLibaray\DelegateGen\LCLRegisterFunctionDelegate.cs" />
     <Compile Include="Assets\CSHotFixLibaray\TestScript\DataClass.cs" />
+    <Compile Include="Assets\CSHotFixLibaray\TestScript\HotFixDllLoader.cs" />
     <Compile Include="Assets\CSHotFixLibaray\TestScript\IGameHotFixInterface.cs" />
     <Compile Include="Assets\CSHotFixLibaray\TestScript\MainTest.cs" />
     <Compile Include="Assets\ILRuntime\ILRuntime\CLR\Method\CLRMethod.cs" />
@@ -92,6 +94,13 @@
     <Compile Include="Assets\ILRuntime\ILRuntime\CLR\TypeSystem\ILType.cs" />
     <Compile Include="Assets\ILRuntime\ILRuntime\CLR\TypeSystem\IType.cs" />
     <Compile Include="Assets\ILRuntime\ILRuntime\CLR\Utils\Extensions.cs" />
+    <Compile Include="Assets\ILRuntime\ILRuntime\Generated\CLRBindings.cs" />
+    <Compile Include="Assets\ILRuntime\ILRuntime\Generated\LCLFieldDelegateName_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\ILRuntime\Generated\LCL_MainTest_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\ILRuntime\Generated\System_Object_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\ILRuntime\Generated\System_Single_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\ILRuntime\Generated\System_String_Binding.cs" />
+    <Compile Include="Assets\ILRuntime\ILRuntime\Generated\UnityEngine_Debug_Binding.cs" />
     <Compile Include="Assets\ILRuntime\ILRuntime\Other\ByReferenceKeyComparer.cs" />
     <Compile Include="Assets\ILRuntime\ILRuntime\Other\DelegateExportAttribute.cs" />
     <Compile Include="Assets\ILRuntime\ILRuntime\Other\NeedAdaptorAttribute.cs" />

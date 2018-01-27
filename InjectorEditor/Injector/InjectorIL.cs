@@ -19,11 +19,16 @@ namespace LCL
     public class InjectorIL
     {
         private List<TypeDefinition> m_DelegateFunctions = null;
-        public void InjectAssembly(string dllPath)
+        private List<NameLine> m_NameLines = new List<NameLine>();
+        private TypeDefinition m_FieldDelegateNameTD;
+
+        private bool m_IsWriteName = false;
+        public void InjectAssembly(string dllPath, string delegatePath, bool isWriteName)
         {
+            m_IsWriteName = isWriteName;
             var readerParameters = new ReaderParameters { ReadSymbols = false };
             AssemblyDefinition assembly = AssemblyDefinition.ReadAssembly(dllPath, readerParameters);
-
+            m_NameLines.Clear();
             foreach (var module in assembly.Modules)
             {
                 List<TypeDefinition> types = module.Types.ToList();
@@ -41,8 +46,23 @@ namespace LCL
 
             foreach (var module in assembly.Modules)
             {
+                List<TypeDefinition> types = module.Types.ToList();
+                m_FieldDelegateNameTD = types.Find((td) => { return td.FullName.Contains("LCLFieldDelegateName"); });
+                if(m_FieldDelegateNameTD!= null)
+                {
+                    break;
+                }
+            }
+
+
+            foreach (var module in assembly.Modules)
+            {
                 foreach (var typ in module.Types)
                 {
+                    if(typ.Namespace == null || !typ.Namespace.Contains("LCL"))
+                    {
+                        continue;
+                    }
                     foreach (var method in typ.Methods)
                     {
                         InjectMethod(typ, method);
@@ -50,13 +70,20 @@ namespace LCL
                 }
             }
 
-            var writerParameters = new WriterParameters { WriteSymbols = true };
-            assembly.Write(dllPath, writerParameters);
-
-
-            if (assembly.MainModule.SymbolReader != null)
+            if (!isWriteName)
             {
-                assembly.MainModule.SymbolReader.Dispose();
+                var writerParameters = new WriterParameters { WriteSymbols = true };
+                assembly.Write(dllPath, writerParameters);
+
+
+                if (assembly.MainModule.SymbolReader != null)
+                {
+                    assembly.MainModule.SymbolReader.Dispose();
+                }
+            }
+            else
+            {
+                ILName.WritedFieldDelegateName(delegatePath, m_NameLines);
             }
         }
 
@@ -76,68 +103,12 @@ namespace LCL
             if (delegateTypeRef != null)
             {
                 //在type里面定义一个字段，类型是我们刚刚找到的委托方法
-                string delegateFieldName = GenerateMethodName(method);
-                FieldDefinition item = new FieldDefinition(delegateFieldName, FieldAttributes.Static | FieldAttributes.Public, delegateTypeRef);
-                type.Fields.Add(item);
-
-                //找到委托的Invoke函数，并且导入到当前类
-                var invokeDeclare = type.Module.ImportReference(delegateTypeRef.Methods.Single(x => x.Name == "Invoke"));
-
-                if (!method.HasBody)
-                    return;
-
-                var insertPoint = method.Body.Instructions[0];
-                var ilGenerator = method.Body.GetILProcessor();
-
-                //压入delegate变量
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
-                //压入Null
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldnull));
-                //压入比较符号
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Cgt_Un));
-
-                //ilspy的误导，其实不用这么写
-                //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Stloc_0));
-                //ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldloc_0));
-
-                //压入Ifelse语句
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Brfalse, insertPoint));
-
-
-                //处理if大括号内部逻辑
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldsfld, item));
-
-
-                if (method.IsStatic)
+                string delegateFieldName = ILName.GenerateMethodName(method);
+                m_NameLines.Add(new NameLine() { Method = delegateTypeRef, Name = delegateFieldName });
+                if (!m_IsWriteName)
                 {
-                    //压入一个null
-                    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ldnull));
+                    ILGen.GenIL(delegateFieldName, type, method, delegateTypeRef, m_FieldDelegateNameTD);
                 }
-                else
-                {
-                    //压入this
-                    ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, 0));
-                }
-
-                for (int i = 0; i < method.Parameters.Count; i++)
-                {
-                    //压入参数
-                    ilGenerator.InsertBefore(insertPoint, CreateLoadArg(ilGenerator, method.IsStatic ? i : i + 1));
-                }
-
-
-                //调用委托
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Call, invokeDeclare));
-
-                if (method.ReturnType.Name == "Void")
-                {
-                    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Nop));
-                }
-                else if (method.ReturnType.IsValueType)
-                {
-                    ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Unbox_Any, method.ReturnType));
-                }
-                ilGenerator.InsertBefore(insertPoint, ilGenerator.Create(OpCodes.Ret));
             }
         }
         private bool HasOutRefArrayParameter(MethodDefinition method)
@@ -147,57 +118,7 @@ namespace LCL
                 return GetParamTypeEnum(pd) != RefOutArrayEnum.None;
             });
         }
-        //常量入栈，常用于压入一个int常量等
-        public Instruction CreateLoadIntConst(ILProcessor ilGenerator, int c)
-        {
-            switch (c)
-            {
-                case 0:
-                    return ilGenerator.Create(OpCodes.Ldc_I4_0);
-                case 1:
-                    return ilGenerator.Create(OpCodes.Ldc_I4_1);
-                case 2:
-                    return ilGenerator.Create(OpCodes.Ldc_I4_2);
-                case 3:
-                    return ilGenerator.Create(OpCodes.Ldc_I4_3);
-                case 4:
-                    return ilGenerator.Create(OpCodes.Ldc_I4_4);
-                case 5:
-                    return ilGenerator.Create(OpCodes.Ldc_I4_5);
-                case 6:
-                    return ilGenerator.Create(OpCodes.Ldc_I4_6);
-                case 7:
-                    return ilGenerator.Create(OpCodes.Ldc_I4_7);
-                case 8:
-                    return ilGenerator.Create(OpCodes.Ldc_I4_8);
-                case -1:
-                    return ilGenerator.Create(OpCodes.Ldc_I4_M1);
-            }
-            if (c >= sbyte.MinValue && c <= sbyte.MaxValue)
-                return ilGenerator.Create(OpCodes.Ldc_I4_S, (sbyte)c);
-
-            return ilGenerator.Create(OpCodes.Ldc_I4, c);
-        }
-
-        //参数列表使用的函数
-        public Instruction CreateLoadArg(ILProcessor ilGenerator, int c)
-        {
-            switch (c)
-            {
-                case 0:
-                    return ilGenerator.Create(OpCodes.Ldarg_0);
-                case 1:
-                    return ilGenerator.Create(OpCodes.Ldarg_1);
-                case 2:
-                    return ilGenerator.Create(OpCodes.Ldarg_2);
-                case 3:
-                    return ilGenerator.Create(OpCodes.Ldarg_3);
-            }
-            if (c > 0 && c < byte.MaxValue)
-                return ilGenerator.Create(OpCodes.Ldarg_S, (byte)c);
-
-            return ilGenerator.Create(OpCodes.Ldarg, c);
-        }
+      
         private RefOutArrayEnum GetParamTypeEnum(ParameterDefinition pd)
         {
             if (pd.IsOut)
@@ -249,23 +170,6 @@ namespace LCL
 
             });
             return t;
-        }
-
-
-        public string GenerateMethodName(MethodDefinition method)
-        {
-            string delegateFieldName = "__" + method.Name;
-            for (int i = 0; i < method.Parameters.Count; i++)
-            {
-                delegateFieldName += "_" + method.Parameters[i].ParameterType.Name;
-            }
-            delegateFieldName += "__Delegate";
-            delegateFieldName = delegateFieldName.Replace(".", "_").
-                Replace("`", "_").
-                Replace("&", "_at_").
-                Replace("[]", "_array_");
-
-            return delegateFieldName;
         }
     }
 

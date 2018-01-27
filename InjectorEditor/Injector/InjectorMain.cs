@@ -17,10 +17,10 @@ namespace LCL
 {
     public class InjectorMain
     {
-        public void Run(string dllPath)
+        public void Run(string dllPath, string delegatePath, bool isWriteName)
         {
             InjectorIL IL = new InjectorIL();
-            IL.InjectAssembly(dllPath);
+            IL.InjectAssembly(dllPath, delegatePath, isWriteName);
         }
     }
 

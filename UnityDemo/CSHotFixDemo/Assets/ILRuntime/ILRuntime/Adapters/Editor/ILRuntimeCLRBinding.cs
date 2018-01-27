@@ -43,7 +43,7 @@ public class ILRuntimeCLRBinding
         Type[] _types = Assembly.Load("Assembly-CSharp").GetTypes();
         foreach(var t in _types)
         {
-            if( t.Namespace!= null && t.Namespace.Contains("GameDll"))
+            if( t.Namespace!= null && t.Namespace.Contains("LCL"))
             {
                 if( t.BaseType == typeof(Delegate) || t.BaseType == typeof(MulticastDelegate))
                 {
@@ -66,7 +66,7 @@ public class ILRuntimeCLRBinding
     static void GenerateCLRBindingByAnalysis()
     {
         //用新的分析热更dll调用引用来生成绑定代码
-        string[] fileNames =  Directory.GetFiles("Assets/Art/Out/GameDll", "*.dll.bytes");
+        string[] fileNames =  Directory.GetFiles("Assets/Resource", "*.dll.bytes");
         foreach (var filename in fileNames)
         {
             ILRuntime.Runtime.Enviorment.AppDomain domain = new ILRuntime.Runtime.Enviorment.AppDomain();

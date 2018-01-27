@@ -39,11 +39,11 @@ namespace LCL
         {
             string dllPath = "C:/GiteeSVN/ProtectGold/Research/MSILInject/Demo/bin/Debug/Demo.exe";
             dllPath = m_DllPath.Text;
-
+            string delegatePath = m_DelegatePath.Text;
             try
             {
                 InjectorMain inject = new InjectorMain();
-                inject.Run(dllPath);
+                inject.Run(dllPath, delegatePath, false);
                 m_log.Text = "注入完毕完毕!";
             }
             catch(Exception exp)
@@ -81,6 +81,23 @@ namespace LCL
             catch(Exception e)
             {
                 m_log.Text = e.Message;
+            }
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            string dllPath = "C:/GiteeSVN/ProtectGold/Research/MSILInject/Demo/bin/Debug/Demo.exe";
+            dllPath = m_DllPath.Text;
+            string delegatePath = m_DelegatePath.Text;
+            try
+            {
+                InjectorMain inject = new InjectorMain();
+                inject.Run(dllPath, delegatePath, true);
+                m_log.Text = "生成变量完毕完毕!";
+            }
+            catch (Exception exp)
+            {
+                m_log.Text = exp.Message + exp.StackTrace;
             }
         }
     }

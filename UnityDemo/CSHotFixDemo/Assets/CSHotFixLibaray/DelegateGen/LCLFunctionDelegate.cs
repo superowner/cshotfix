@@ -16,6 +16,6 @@ public class LCLFunctionDelegate
 {
      public delegate void method_delegate0(System.Object arg0);
      public delegate void method_delegate1(System.Object arg0,System.Int32 arg1);
-     public delegate System.Single[] method_delegate2(System.Object arg0,ref System.Int32 arg1,out System.Single arg2,System.Byte[] arg3);
+     public delegate System.Single[] method_delegate2(System.Object arg0,ref System.Int32 arg1,out System.Single arg2);
      public delegate LCL.DataClass method_delegate3(System.Object arg0,LCL.DataClass arg1);
 }

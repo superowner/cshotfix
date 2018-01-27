@@ -9,7 +9,6 @@ namespace LCL
         // Use this for initialization
         void Start()
         {
-
         }
         void Test0()
         {
@@ -26,9 +25,10 @@ namespace LCL
         }
 
         //暂时不支持4个以上的参数，这个取决于ILRT那边
-        public static float[] test3(ref int b, out float c, byte[] data)
+        public static float[] test3(ref int b, out float c)
         {
             c = 0;
+            Debug.LogError("我是一个错误");
             return new float[] { 1 };
         }
 

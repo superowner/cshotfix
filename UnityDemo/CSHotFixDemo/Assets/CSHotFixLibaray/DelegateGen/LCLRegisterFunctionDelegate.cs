@@ -20,7 +20,7 @@ public class LCLRegisterFunctionDelegate
    {
          appDomain.DelegateManager.RegisterMethodDelegate<System.Object>();
          appDomain.DelegateManager.RegisterMethodDelegate<System.Object,System.Int32>();
-         appDomain.DelegateManager.RegisterFunctionDelegate<System.Object,System.Int32,System.Single,System.Byte[],System.Single[]>();
+         appDomain.DelegateManager.RegisterFunctionDelegate<System.Object,System.Int32,System.Single,System.Single[]>();
          appDomain.DelegateManager.RegisterFunctionDelegate<System.Object,LCL.DataClass,LCL.DataClass>();
    }
 }
