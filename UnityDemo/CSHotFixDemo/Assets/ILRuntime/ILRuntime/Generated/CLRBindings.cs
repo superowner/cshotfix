@@ -12,6 +12,7 @@ namespace ILRuntime.Runtime.Generated
         public static void Initialize(ILRuntime.Runtime.Enviorment.AppDomain app)
         {
             LCLFieldDelegateName_Binding.Register(app);
+            System_Object_Binding.Register(app);
             System_String_Binding.Register(app);
             UnityEngine_Debug_Binding.Register(app);
         }

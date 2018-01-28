@@ -17,7 +17,7 @@ public class LCLFieldDelegateName
      public static LCLFunctionDelegate.method_delegate0 __LCL_MainTest__Start__Delegate;
      public static LCLFunctionDelegate.method_delegate0 __LCL_MainTest__Test0__Delegate;
      public static LCLFunctionDelegate.method_delegate1 __LCL_MainTest__Test1_Int32__Delegate;
-     public static LCLFunctionDelegate.method_delegate1 __LCL_MainTest__Test2_Int32__Delegate;
-     public static LCLFunctionDelegate.method_delegate2 __LCL_MainTest__test3_Int32_at__Single_at___Delegate;
-     public static LCLFunctionDelegate.method_delegate3 __LCL_MainTest__test4_DataClass__Delegate;
+     public static LCLFunctionDelegate.method_delegate2 __LCL_MainTest__Test2_Int32_Single__Delegate;
+     public static LCLFunctionDelegate.function_delegate3 __LCL_MainTest__test4_DataClass__Delegate;
+     public static LCLFunctionDelegate.function_delegate4 __LCL_MainTest__ImPrivateFunction_Int32_Int32__Delegate;
 }

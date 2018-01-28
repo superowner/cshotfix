@@ -62,6 +62,7 @@ namespace LCL
                 line += paramstr;
                 line += ">();\r\n";
                 reglines += line;
+
             }
             string fileEnd =
     "   }\r\n" +

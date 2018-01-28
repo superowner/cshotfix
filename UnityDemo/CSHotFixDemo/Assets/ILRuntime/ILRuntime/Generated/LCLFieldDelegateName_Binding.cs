@@ -23,15 +23,23 @@ namespace ILRuntime.Runtime.Generated
             Type[] args;
             Type type = typeof(LCLFieldDelegateName);
 
-            field = type.GetField("__LCL_MainTest__Test1_Int32__Delegate", flag);
-
+            field = type.GetField("__LCL_MainTest__Test2_Int32_Single__Delegate", flag);
+            app.RegisterCLRFieldGetter(field, get___LCL_MainTest__Test2_Int32_Single__Delegate_0);
+            app.RegisterCLRFieldSetter(field, set___LCL_MainTest__Test2_Int32_Single__Delegate_0);
 
 
         }
 
 
 
-
+        static object get___LCL_MainTest__Test2_Int32_Single__Delegate_0(ref object o)
+        {
+            return LCLFieldDelegateName.__LCL_MainTest__Test2_Int32_Single__Delegate;
+        }
+        static void set___LCL_MainTest__Test2_Int32_Single__Delegate_0(ref object o, object v)
+        {
+            LCLFieldDelegateName.__LCL_MainTest__Test2_Int32_Single__Delegate = (LCLFunctionDelegate.method_delegate2)v;
+        }
 
 
     }

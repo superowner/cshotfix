@@ -40,11 +40,21 @@ namespace LCL
     "{\r\n";
             int funcIndex = 0;
             string fileFunctions = "";
+
+            string regLines = "";
             foreach (var info in lines)
             {
                 string funcline = "     public delegate " + info.m_ReturnString + " ";
-
-                funcline += "method_delegate" + funcIndex++ + "(";
+                string funcName = "";
+                if (info.m_ReturnString.ToLower().Contains("void"))
+                {
+                    funcName = "method_delegate" + funcIndex++;
+                }
+                else
+                {
+                    funcName = "function_delegate" + funcIndex++;
+                }
+                funcline += funcName + "(";
                 int paramIndex = 0;
                 foreach (var param in info.m_Params)
                 {
@@ -72,11 +82,18 @@ namespace LCL
                 }
                 funcline += ");\r\n";
                 fileFunctions += funcline;
+
+                regLines += WriteRegisterDelegateConvertor(funcName, info)+"\r\n";
             }
+            regLines = "    public static void Reg(ILRuntime.Runtime.Enviorment.AppDomain appDomain)\r\n"+
+    "{ \r\n"+regLines +
+                "}\r\n";
+
+
             string fileEnd =
     "}";
 
-            string outputString = fileHeader + fileFunctions + fileEnd;
+            string outputString = fileHeader + fileFunctions + regLines +fileEnd;
             FileStream file = null;
             StreamWriter sw = null;
             //有什么错误，就直接让系统去抛吧。
@@ -86,6 +103,42 @@ namespace LCL
             sw.Flush();
             sw.Close();
             file.Close();
+        }
+
+        private string WriteRegisterDelegateConvertor(string method_delegate, LMethodInfo info)
+        {
+            bool isAction = info.m_ReturnString.ToLower().Contains("void");
+            string paramstrings = "";
+            string paramTypestrings = "";
+            int index = 0;
+            foreach(var p in info.m_Params)
+            {
+                paramTypestrings += p.m_ParamString;
+                paramstrings += "arg" + index;
+                if(index < info.m_Params.Count-1)
+                {
+                    paramTypestrings += ",";
+                    paramstrings += ",";
+                }
+                else
+                {
+                    if (!isAction)
+                    {
+                        paramTypestrings += "," + info.m_ReturnString;
+                    }
+                }
+                index++;
+            }
+            string regDelegate = "appDomain.DelegateManager.Register" + (isAction ? "Method" : "Function") + "Delegate<" + paramTypestrings + ">();\r\n";
+            string convertor = 
+                "   appDomain.DelegateManager.RegisterDelegateConvertor<LCLFunctionDelegate." + method_delegate + ">((act) =>\r\n" +
+                "   {\r\n" +
+                "       return new LCLFunctionDelegate." + method_delegate + "((" + paramstrings + ") =>\r\n" +
+                "       {\r\n" +
+                "       "+(isAction?"":"return ") +"((" + (isAction ? "Action" : "Func") + "<" + paramTypestrings + ">)act)(" + paramstrings + ");\r\n" +
+                "       });\r\n" +
+                "   });\r\n";
+            return regDelegate + convertor;
         }
     }
 

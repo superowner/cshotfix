@@ -30,8 +30,8 @@ namespace LCL
             delegateWriter.WriteFunctionDelegate(delegatePath, lines);
 
 
-            ILRuntime_RegisterFunctionDelegate_Writer registerFunctionDelegate = new ILRuntime_RegisterFunctionDelegate_Writer();
-            registerFunctionDelegate.WriteRegisterFunctionDelegate(delegatePath, lines);
+            //ILRuntime_RegisterFunctionDelegate_Writer registerFunctionDelegate = new ILRuntime_RegisterFunctionDelegate_Writer();
+            //registerFunctionDelegate.WriteRegisterFunctionDelegate(delegatePath, lines);
         }
         private List<LMethodInfo> LoadAssembly(string assemblyName)
         {
@@ -80,11 +80,15 @@ namespace LCL
                             ParamData paramdata = new ParamData();
                             if (pi.IsOut)
                             {
+                                //暂时不支持out
                                 paramdata.m_RefOut = RefOutArrayEnum.Out;
+                                continue;
                             }
                             else if (pi.ParameterType.IsByRef)
                             {
+                                //暂时不支持ref
                                 paramdata.m_RefOut = RefOutArrayEnum.Ref;
+                                continue;
                             }
                             else if (pi.ParameterType.IsArray)
                             {
